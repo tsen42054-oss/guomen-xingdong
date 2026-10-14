@@ -762,7 +762,11 @@ h1,h2,h3,h4{margin:0;}
    ============================================================ */
 var $ = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+var clamp = function (v, a, b) {
+  v = +v;
+  if (!isFinite(v)) { return a; }
+  return v < a ? a : (v > b ? b : v);
+};
 var lerp = function (a, b, t) { return a + (b - a) * t; };
 var dist = function (x1, y1, x2, y2) { var dx = x2 - x1, dy = y2 - y1; return Math.sqrt(dx * dx + dy * dy); };
 
@@ -888,6 +892,12 @@ function setRect(m, x, y, w, h, ch) {
 }
 /* 可通行的地形；其余一律视为障碍 */
 var WALKABLE = { '.': 1, '=': 1, ',': 1, 'p': 1, 'g': 1, 'W': 1, 'd': 1, 's': 1 };
+
+/* 默认阻挡的物件类型（可用物件上的 s:true/false 覆盖） */
+var SOLID_KINDS = {
+  container: 1, building: 1, barrel: 1, crate: 1, rail: 1, boardobj: 1,
+  truck: 1, forklift: 1, reel: 1, pallet: 1, cranepost: 1
+};
 function tileWalkable(m, c, r) {
   if (r < 0 || r >= m.length || c < 0 || c >= m[0].length) { return false; }
   return !!WALKABLE[m[r][c]];
@@ -918,9 +928,11 @@ var MAP2 = (function () {
   setRect(m, 0, 0, 1, MAP_H, 'F');
   setRect(m, 39, 0, 1, MAP_H, 'F');
   setRect(m, 4, 20, 32, 3, ',');        // 库区道路
-  setRect(m, 27, 3, 11, 5, 'p');        // 装卸广场
-  setRect(m, 2, 22, 8, 5, 'g');
-  setRect(m, 32, 22, 7, 5, 'g');
+  setRect(m, 27, 1, 12, 6, 'p');        // 东北装卸广场
+  setRect(m, 1, 1, 4, 6, 'p');          // 西北调度场
+  setRect(m, 21, 6, 4, 2, ',');         // 两座仓库之间的联络通道
+  setRect(m, 2, 22, 7, 5, 'g');         // 绿化带
+  setRect(m, 33, 22, 6, 5, 'g');
   return m;
 })();
 
@@ -930,7 +942,7 @@ var MAP3 = (function () {
   setRect(m, 0, 0, MAP_W, 6, '~');       // 海面
   setRect(m, 0, 6, MAP_W, 1, '=');       // 码头前沿
   setRect(m, 0, 7, MAP_W, 2, ',');       // 国门前沿道路
-  setRect(m, 12, 9, 16, 9, ',');         // 查验车道区
+  setRect(m, 8, 9, 24, 9, ',');          // 查验车道区（含国门门洞）
   setRect(m, 0, 19, MAP_W, 2, ',');      // 横向道路
   setRect(m, 0, 24, MAP_W, 2, 'p');      // 集合广场
   setRect(m, 0, 26, MAP_W, 1, 'g');
@@ -954,10 +966,10 @@ var LEVEL1 = {
   ambient: { dark: 0.30, warm: 'rgba(255,170,90,0.10)' },
   required: 6,
   obstacles: [
-    /* 建筑（实心屋顶） */
+    /* ---- 建筑 ---- */
     { x: 1, y: 9, w: 5, h: 3, k: 'building', label: '值班室' },
     { x: 1, y: 15, w: 4, h: 4, k: 'building', label: '工具库' },
-    /* 集装箱堆场（第一排） */
+    /* ---- 集装箱堆场 · 北排 ---- */
     { x: 8, y: 11, w: 3, h: 2, k: 'container', c: 'blue' },
     { x: 13, y: 11, w: 2, h: 2, k: 'container', c: 'red' },
     { x: 17, y: 11, w: 3, h: 2, k: 'container', c: 'gold' },
@@ -965,7 +977,7 @@ var LEVEL1 = {
     { x: 26, y: 11, w: 3, h: 2, k: 'container', c: 'blue' },
     { x: 31, y: 11, w: 2, h: 2, k: 'container', c: 'red' },
     { x: 35, y: 11, w: 3, h: 2, k: 'container', c: 'gold' },
-    /* 集装箱堆场（第二排） */
+    /* ---- 集装箱堆场 · 中排 ---- */
     { x: 8, y: 15, w: 2, h: 2, k: 'container', c: 'green' },
     { x: 12, y: 15, w: 3, h: 2, k: 'container', c: 'red' },
     { x: 17, y: 15, w: 2, h: 2, k: 'container', c: 'gold' },
@@ -973,21 +985,74 @@ var LEVEL1 = {
     { x: 26, y: 15, w: 2, h: 2, k: 'container', c: 'red' },
     { x: 30, y: 15, w: 3, h: 2, k: 'container', c: 'green' },
     { x: 35, y: 15, w: 2, h: 2, k: 'container', c: 'blue' },
-    /* 小物件 */
-    { x: 6, y: 13, w: 1, h: 1, k: 'barrel' },
+    /* ---- 集装箱堆场 · 南缘一排（填补原本空旷的南通道北侧） ---- */
+    { x: 3, y: 18, w: 2, h: 1, k: 'container', c: 'gold' },
+    { x: 8, y: 18, w: 2, h: 1, k: 'container', c: 'red' },
+    { x: 14, y: 18, w: 2, h: 1, k: 'container', c: 'blue' },
+    { x: 21, y: 18, w: 2, h: 1, k: 'container', c: 'green' },
+    { x: 28, y: 18, w: 2, h: 1, k: 'container', c: 'gold' },
+    { x: 35, y: 18, w: 2, h: 1, k: 'container', c: 'red' },
+    /* ---- 龙门吊（港口地标，悬臂跨过码头前沿） ---- */
+    { x: 11, y: 3, w: 11, h: 3, k: 'cranebeam' },
+    { x: 12, y: 7, w: 1, h: 2, k: 'cranepost' },
+    { x: 20, y: 7, w: 1, h: 2, k: 'cranepost' },
+    /* ---- 系船柱（沿码头前沿成排布置） ---- */
+    { x: 4, y: 8, w: 1, h: 1, k: 'bollard' },
+    { x: 9, y: 8, w: 1, h: 1, k: 'bollard' },
+    { x: 16, y: 8, w: 1, h: 1, k: 'bollard' },
+    { x: 24, y: 8, w: 1, h: 1, k: 'bollard' },
+    { x: 32, y: 8, w: 1, h: 1, k: 'bollard' },
+    { x: 37, y: 8, w: 1, h: 1, k: 'bollard' },
+    /* ---- 电缆盘 / 油桶 / 木箱 / 托盘货垛 ---- */
+    { x: 6, y: 11, w: 1, h: 1, k: 'reel' },
+    { x: 6, y: 17, w: 1, h: 1, k: 'reel' },
     { x: 33, y: 13, w: 1, h: 1, k: 'barrel' },
+    { x: 25, y: 18, w: 1, h: 1, k: 'barrel' },
     { x: 20, y: 13, w: 1, h: 1, k: 'crate' },
     { x: 28, y: 13, w: 1, h: 1, k: 'crate' },
-    { x: 11, y: 18, w: 1, h: 1, k: 'crate' },
-    { x: 25, y: 18, w: 1, h: 1, k: 'barrel' },
-    /* 路灯（不阻挡） */
+    { x: 24, y: 9, w: 1, h: 1, k: 'pallet' },
+    { x: 26, y: 9, w: 1, h: 1, k: 'pallet' },
+    /* ---- 指路牌 ---- */
+    { x: 9, y: 20, w: 1, h: 1, k: 'sign' },
+    /* ---- 交通锥（沿叉车通道） ---- */
+    { x: 12, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 13, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 30, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 31, y: 19, w: 1, h: 1, k: 'cone' },
+    /* ---- 货车（停放于广场停车位） ---- */
+    { x: 5, y: 22, w: 4, h: 2, k: 'truck' },
+    { x: 30, y: 22, w: 4, h: 2, k: 'truck' },
+    /* ---- 路灯（前沿与道路成排） ---- */
+    { x: 6, y: 8, w: 1, h: 1, k: 'lamp' },
+    { x: 14, y: 8, w: 1, h: 1, k: 'lamp' },
+    { x: 27, y: 8, w: 1, h: 1, k: 'lamp' },
+    { x: 35, y: 8, w: 1, h: 1, k: 'lamp' },
     { x: 6, y: 20, w: 1, h: 1, k: 'lamp' },
-    { x: 14, y: 20, w: 1, h: 1, k: 'lamp' },
-    { x: 22, y: 20, w: 1, h: 1, k: 'lamp' },
-    { x: 30, y: 20, w: 1, h: 1, k: 'lamp' },
-    { x: 38, y: 20, w: 1, h: 1, k: 'lamp' },
-    { x: 10, y: 8, w: 1, h: 1, k: 'lamp' },
-    { x: 30, y: 8, w: 1, h: 1, k: 'lamp' }
+    { x: 20, y: 20, w: 1, h: 1, k: 'lamp' },
+    { x: 28, y: 20, w: 1, h: 1, k: 'lamp' },
+    { x: 36, y: 20, w: 1, h: 1, k: 'lamp' },
+    { x: 10, y: 23, w: 1, h: 1, k: 'lamp' },
+    { x: 30, y: 23, w: 1, h: 1, k: 'lamp' }
+  ],
+  paint: [
+    /* 堆场叉车通道（横向两条） */
+    { x: 6, y: 10, w: 32, h: 1, k: 'lane' },
+    { x: 6, y: 19, w: 32, h: 1, k: 'lane' },
+    /* 堆场纵向引导线 */
+    { x: 14, y: 9, w: 1, h: 12, k: 'dash' },
+    { x: 24, y: 9, w: 1, h: 12, k: 'dash' },
+    /* 广场停车位 */
+    { x: 4, y: 22, w: 13, h: 2, k: 'bay' },
+    { x: 29, y: 22, w: 10, h: 2, k: 'bay' },
+    /* 港区道路：中线与人行横道 */
+    { x: 0, y: 21, w: 40, h: 0.1, k: 'mark', c: 'rgba(255,223,138,.28)' },
+    { x: 12, y: 20, w: 5, h: 2, k: 'cross' },
+    /* 值班室 / 工具库前的混凝土场地 */
+    { x: 0, y: 9, w: 7, h: 10, k: 'grid', c: 'rgba(150,185,240,.14)' },
+    /* 集装箱堆场地面引导网格 */
+    { x: 6, y: 11, w: 34, h: 9, k: 'grid', c: 'rgba(120,165,235,.09)' },
+    /* 任务终端前的作业警示区 */
+    { x: 15, y: 21, w: 13, h: 1, k: 'hazard' }
   ],
   ship: { x: 5, y: 0.4, w: 24, h: 5.6 },
   items: [
@@ -1107,33 +1172,91 @@ var LEVEL2 = {
   ambient: { dark: 0.10, warm: 'rgba(255,255,255,0.04)' },
   required: 5,
   obstacles: [
+    /* ---- 仓库建筑 ---- */
     { x: 5, y: 7, w: 16, h: 8, k: 'building', label: 'A 区仓库' },
     { x: 25, y: 7, w: 11, h: 8, k: 'building', label: 'B 区仓库' },
+    /* ---- 北侧货场：成排集装箱 ---- */
+    { x: 5, y: 2, w: 3, h: 2, k: 'container', c: 'red' },
+    { x: 9, y: 2, w: 2, h: 2, k: 'container', c: 'blue' },
+    { x: 13, y: 2, w: 3, h: 2, k: 'container', c: 'gold' },
+    { x: 18, y: 2, w: 2, h: 2, k: 'container', c: 'green' },
+    { x: 5, y: 5, w: 2, h: 1, k: 'container', c: 'gold' },
+    { x: 9, y: 5, w: 3, h: 1, k: 'container', c: 'green' },
+    { x: 14, y: 5, w: 2, h: 1, k: 'container', c: 'red' },
+    { x: 18, y: 5, w: 2, h: 1, k: 'container', c: 'blue' },
+    /* ---- 东北装卸广场 ---- */
+    { x: 28, y: 2, w: 3, h: 2, k: 'container', c: 'blue' },
+    { x: 32, y: 2, w: 2, h: 2, k: 'container', c: 'red' },
+    { x: 28, y: 5, w: 2, h: 1, k: 'container', c: 'gold' },
+    { x: 32, y: 5, w: 3, h: 1, k: 'container', c: 'green' },
+    /* ---- 西侧检修区 ---- */
+    { x: 1, y: 8, w: 3, h: 2, k: 'container', c: 'blue' },
+    { x: 1, y: 12, w: 3, h: 1, k: 'container', c: 'red' },
+    /* ---- 装卸月台 ---- */
+    { x: 5, y: 15, w: 16, h: 1, k: 'platform' },
+    { x: 25, y: 15, w: 11, h: 1, k: 'platform' },
+    /* ---- 月台托盘货垛 ---- */
+    { x: 6, y: 16, w: 2, h: 1, k: 'pallet' },
+    { x: 11, y: 16, w: 2, h: 1, k: 'pallet' },
+    { x: 16, y: 16, w: 2, h: 1, k: 'pallet' },
+    { x: 26, y: 16, w: 2, h: 1, k: 'pallet' },
+    { x: 31, y: 16, w: 2, h: 1, k: 'pallet' },
+    /* ---- 南侧堆场（道路以北） ---- */
     { x: 5, y: 17, w: 3, h: 2, k: 'container', c: 'blue' },
     { x: 9, y: 17, w: 2, h: 2, k: 'container', c: 'gold' },
     { x: 13, y: 17, w: 3, h: 2, k: 'container', c: 'red' },
-    { x: 18, y: 17, w: 2, h: 2, k: 'container', c: 'green' },
-    { x: 23, y: 17, w: 3, h: 2, k: 'container', c: 'blue' },
+    { x: 24, y: 17, w: 3, h: 2, k: 'container', c: 'blue' },
     { x: 29, y: 17, w: 2, h: 2, k: 'container', c: 'red' },
     { x: 33, y: 17, w: 3, h: 2, k: 'container', c: 'gold' },
-    { x: 3, y: 4, w: 1, h: 1, k: 'crate' },
-    { x: 4, y: 5, w: 1, h: 1, k: 'crate' },
+    /* ---- 地磅（可通行，车辆称重通道） ---- */
+    { x: 17, y: 17, w: 5, h: 1, k: 'weighbridge' },
+    /* ---- 电缆盘 / 油桶 / 木箱 / 托盘 ---- */
+    { x: 3, y: 5, w: 1, h: 1, k: 'reel' },
+    { x: 38, y: 12, w: 1, h: 1, k: 'reel' },
+    { x: 3, y: 20, w: 1, h: 1, k: 'barrel' },
     { x: 3, y: 24, w: 1, h: 1, k: 'barrel' },
-    { x: 38, y: 3, w: 1, h: 1, k: 'barrel' },
     { x: 38, y: 24, w: 1, h: 1, k: 'crate' },
+    { x: 22, y: 4, w: 1, h: 1, k: 'pallet' },
+    { x: 19, y: 20, w: 1, h: 1, k: 'pallet' },
+    /* ---- 交通锥 ---- */
+    { x: 16, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 17, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 23, y: 19, w: 1, h: 1, k: 'cone' },
+    /* ---- 叉车 ---- */
+    { x: 12, y: 20, w: 1, h: 1, k: 'forklift' },
+    /* ---- 货车 ---- */
+    { x: 31, y: 22, w: 4, h: 2, k: 'truck' },
+    /* ---- 门卫室 ---- */
+    { x: 36, y: 19, w: 3, h: 2, k: 'building', label: '门卫室' },
+    /* ---- 宣传横幅 ---- */
+    { x: 6, y: 21, w: 10, h: 1, k: 'banner' },
+    /* ---- 路灯 ---- */
     { x: 2, y: 9, w: 1, h: 1, k: 'lamp' },
-    { x: 22, y: 4, w: 1, h: 1, k: 'lamp' },
+    { x: 23, y: 6, w: 1, h: 1, k: 'lamp' },
     { x: 37, y: 9, w: 1, h: 1, k: 'lamp' },
-    { x: 2, y: 19, w: 1, h: 1, k: 'lamp' },
-    { x: 37, y: 19, w: 1, h: 1, k: 'lamp' },
-    { x: 10, y: 21, w: 1, h: 1, k: 'lamp' },
-    { x: 28, y: 21, w: 1, h: 1, k: 'lamp' },
-    /* 装卸月台（不阻挡，视觉用） */
-    { x: 5, y: 15, w: 16, h: 1, k: 'platform' },
-    { x: 25, y: 15, w: 11, h: 1, k: 'platform' },
-    /* 叉车 / 货车 */
-    { x: 33, y: 22, w: 4, h: 2, k: 'truck' },
-    { x: 20, y: 18, w: 1, h: 1, k: 'forklift' }
+    { x: 2, y: 18, w: 1, h: 1, k: 'lamp' },
+    { x: 37, y: 14, w: 1, h: 1, k: 'lamp' },
+    { x: 10, y: 22, w: 1, h: 1, k: 'lamp' },
+    { x: 26, y: 21, w: 1, h: 1, k: 'lamp' },
+    { x: 21, y: 23, w: 1, h: 1, k: 'lamp' }
+  ],
+  paint: [
+    /* 库区道路中线 */
+    { x: 4, y: 22, w: 32, h: 0.1, k: 'mark', c: 'rgba(255,223,138,.26)' },
+    /* 仓库装卸位 */
+    { x: 5, y: 14, w: 16, h: 1, k: 'bay' },
+    { x: 25, y: 14, w: 11, h: 1, k: 'bay' },
+    /* 地磅引道 */
+    { x: 18, y: 16, w: 6, h: 1, k: 'dash' },
+    /* 北货场与东北广场引导网格 */
+    { x: 1, y: 1, w: 25, h: 6, k: 'grid', c: 'rgba(140,175,230,.12)' },
+    { x: 27, y: 1, w: 12, h: 6, k: 'grid', c: 'rgba(140,175,230,.10)' },
+    /* 东北装卸广场停车位 */
+    { x: 27, y: 4, w: 11, h: 3, k: 'bay', c: 'rgba(200,224,255,.34)' },
+    /* 南侧装卸通道 */
+    { x: 4, y: 19, w: 32, h: 1, k: 'lane' },
+    /* 门卫前人行横道 */
+    { x: 32, y: 20, w: 4, h: 2, k: 'cross' }
   ],
   ship: null,
   items: [
@@ -1233,56 +1356,92 @@ var LEVEL3 = {
   desc: '夜色渐深，你带着三天整理下来的线索，来到国门查验区。把情况完整地交给现场海关工作人员，完成这次国门行动的最后一项任务。',
   hint: '先与两位现场工作人员交谈，再前往中央查验通道完成最终任务。',
   map: MAP3,
-  spawn: { c: 20, r: 21 },
+  spawn: { c: 20, r: 17 },
   sky: 'night',
-  ambient: { dark: 0.42, warm: 'rgba(255,200,110,0.08)' },
+  ambient: { dark: 0.38, warm: 'rgba(255,200,110,0.08)' },
   required: 3,
   obstacles: [
-    /* 国门塔楼 */
-    { x: 7, y: 9, w: 5, h: 8, k: 'building', label: '国门' },
-    { x: 28, y: 9, w: 5, h: 8, k: 'building', label: '国门' },
-    /* 岗亭 */
-    { x: 3, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
-    { x: 34, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
-    /* 查验通道隔离栏（留出通行口） */
-    { x: 13, y: 10, w: 5, h: 1, k: 'rail' },
-    { x: 19, y: 10, w: 5, h: 1, k: 'rail' },
-    { x: 13, y: 13, w: 5, h: 1, k: 'rail' },
-    { x: 19, y: 13, w: 5, h: 1, k: 'rail' },
-    { x: 13, y: 16, w: 5, h: 1, k: 'rail' },
-    { x: 19, y: 16, w: 5, h: 1, k: 'rail' },
-    /* 广场排队隔离栏 */
-    { x: 1, y: 23, w: 5, h: 1, k: 'rail' },
-    { x: 13, y: 23, w: 5, h: 1, k: 'rail' },
-    { x: 22, y: 23, w: 5, h: 1, k: 'rail' },
-    { x: 34, y: 23, w: 5, h: 1, k: 'rail' },
-    /* 宣传展板 */
-    { x: 4, y: 10, w: 1, h: 3, k: 'boardobj', label: '宣传展板' },
-    { x: 35, y: 10, w: 1, h: 3, k: 'boardobj', label: '宣传展板' },
-    /* 反走私宣传旗 */
-    { x: 17, y: 20, w: 1, h: 1, k: 'flag' },
-    { x: 23, y: 20, w: 1, h: 1, k: 'flag' },
-    { x: 9, y: 22, w: 1, h: 1, k: 'flag' },
-    { x: 31, y: 22, w: 1, h: 1, k: 'flag' },
-    /* 交通锥 */
+    /* ---- 国门塔楼（左右对称，中间为查验门洞） ---- */
+    { x: 10, y: 9, w: 5, h: 8, k: 'building', label: '国门' },
+    { x: 25, y: 9, w: 5, h: 8, k: 'building', label: '国门' },
+    /* ---- 查验岗亭 ---- */
+    { x: 4, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
+    { x: 33, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
+    /* ---- 查验通道隔离栏（留出 19-20 / 24 号通行口） ---- */
+    { x: 15, y: 10, w: 4, h: 1, k: 'rail' },
+    { x: 21, y: 10, w: 3, h: 1, k: 'rail' },
+    { x: 15, y: 13, w: 4, h: 1, k: 'rail' },
+    { x: 21, y: 13, w: 3, h: 1, k: 'rail' },
+    { x: 15, y: 16, w: 4, h: 1, k: 'rail' },
+    { x: 21, y: 16, w: 3, h: 1, k: 'rail' },
+    /* ---- 广场排队隔离栏（蛇形分流） ---- */
+    { x: 1, y: 22, w: 6, h: 1, k: 'rail' },
+    { x: 12, y: 22, w: 6, h: 1, k: 'rail' },
+    { x: 23, y: 22, w: 6, h: 1, k: 'rail' },
+    { x: 33, y: 22, w: 6, h: 1, k: 'rail' },
+    { x: 8, y: 25, w: 8, h: 1, k: 'rail' },
+    { x: 24, y: 25, w: 8, h: 1, k: 'rail' },
+    /* ---- 宣传展板 ---- */
+    { x: 5, y: 9, w: 1, h: 3, k: 'boardobj', label: '宣传展板' },
+    { x: 36, y: 9, w: 1, h: 3, k: 'boardobj', label: '宣传展板' },
+    /* ---- 反走私宣传横幅 ---- */
+    { x: 13, y: 8, w: 14, h: 1, k: 'banner' },
+    { x: 5, y: 20, w: 6, h: 1, k: 'banner' },
+    { x: 30, y: 20, w: 5, h: 1, k: 'banner' },
+    /* ---- 反走私宣传旗 ---- */
+    { x: 17, y: 19, w: 1, h: 1, k: 'flag' },
+    { x: 23, y: 19, w: 1, h: 1, k: 'flag' },
+    { x: 9, y: 24, w: 1, h: 1, k: 'flag' },
+    { x: 12, y: 24, w: 1, h: 1, k: 'flag' },
+    { x: 28, y: 24, w: 1, h: 1, k: 'flag' },
+    { x: 31, y: 24, w: 1, h: 1, k: 'flag' },
+    /* ---- 系船柱 / 指路牌 ---- */
+    { x: 6, y: 6, w: 1, h: 1, k: 'bollard' },
+    { x: 18, y: 6, w: 1, h: 1, k: 'bollard' },
+    { x: 30, y: 6, w: 1, h: 1, k: 'bollard' },
+    { x: 20, y: 19, w: 1, h: 1, k: 'sign' },
+    /* ---- 交通锥（沿查验通道与广场） ---- */
     { x: 12, y: 19, w: 1, h: 1, k: 'cone' },
-    { x: 19, y: 19, w: 1, h: 1, k: 'cone' },
-    { x: 21, y: 19, w: 1, h: 1, k: 'cone' },
-    { x: 28, y: 19, w: 1, h: 1, k: 'cone' },
-    { x: 8, y: 25, w: 1, h: 1, k: 'cone' },
-    { x: 32, y: 25, w: 1, h: 1, k: 'cone' },
-    /* 路灯 */
+    { x: 26, y: 19, w: 1, h: 1, k: 'cone' },
+    { x: 16, y: 12, w: 1, h: 1, k: 'cone' },
+    { x: 23, y: 12, w: 1, h: 1, k: 'cone' },
+    { x: 16, y: 15, w: 1, h: 1, k: 'cone' },
+    { x: 23, y: 15, w: 1, h: 1, k: 'cone' },
+    /* ---- 车辆 ---- */
+    { x: 2, y: 16, w: 3, h: 2, k: 'truck' },
+    { x: 35, y: 16, w: 3, h: 2, k: 'truck' },
+    /* ---- 通道两侧作业区 ---- */
+    { x: 6, y: 17, w: 1, h: 1, k: 'reel' },
+    { x: 33, y: 17, w: 1, h: 1, k: 'reel' },
+    { x: 11, y: 18, w: 2, h: 1, k: 'pallet' },
+    { x: 27, y: 18, w: 2, h: 1, k: 'pallet' },
+    /* ---- 路灯 ---- */
     { x: 2, y: 8, w: 1, h: 1, k: 'lamp' },
-    { x: 20, y: 7, w: 1, h: 1, k: 'lamp' },
+    { x: 11, y: 7, w: 1, h: 1, k: 'lamp' },
+    { x: 29, y: 7, w: 1, h: 1, k: 'lamp' },
     { x: 37, y: 8, w: 1, h: 1, k: 'lamp' },
     { x: 6, y: 18, w: 1, h: 1, k: 'lamp' },
     { x: 20, y: 18, w: 1, h: 1, k: 'lamp' },
     { x: 33, y: 18, w: 1, h: 1, k: 'lamp' },
-    { x: 10, y: 22, w: 1, h: 1, k: 'lamp' },
-    { x: 30, y: 22, w: 1, h: 1, k: 'lamp' },
-    { x: 19, y: 25, w: 1, h: 1, k: 'lamp' },
-    /* 车辆 */
-    { x: 2, y: 16, w: 3, h: 2, k: 'truck' }
+    { x: 10, y: 21, w: 1, h: 1, k: 'lamp' },
+    { x: 30, y: 21, w: 1, h: 1, k: 'lamp' },
+    { x: 19, y: 25, w: 1, h: 1, k: 'lamp' }
+  ],
+  paint: [
+    /* 国门前沿道路中线 */
+    { x: 0, y: 8, w: 40, h: 0.1, k: 'mark', c: 'rgba(255,223,138,.26)' },
+    /* 查验车道分隔虚线 */
+    { x: 15, y: 10, w: 9, h: 0.1, k: 'dash', c: 'rgba(226,236,255,.30)' },
+    { x: 15, y: 13, w: 9, h: 0.1, k: 'dash', c: 'rgba(226,236,255,.30)' },
+    { x: 15, y: 16, w: 9, h: 0.1, k: 'dash', c: 'rgba(226,236,255,.30)' },
+    /* 车道停止线 */
+    { x: 15, y: 12, w: 9, h: 0.4, k: 'mark', c: 'rgba(226,236,255,.20)' },
+    /* 国门前斑马线 */
+    { x: 17, y: 8, w: 6, h: 2, k: 'cross' },
+    /* 横向道路中线 */
+    { x: 0, y: 20, w: 40, h: 0.1, k: 'mark', c: 'rgba(255,223,138,.24)' },
+    /* 集合广场引导网格 */
+    { x: 1, y: 21, w: 38, h: 5, k: 'grid', c: 'rgba(150,185,240,.10)' }
   ],
   ship: { x: 24, y: 0.3, w: 15, h: 4.8, side: true },
   items: [
@@ -1621,7 +1780,7 @@ function drawRoad(c, r, sx, sy, s) {
   ctx.fillRect(sx, sy, s + 1, s + 1);
   ctx.fillStyle = 'rgba(255,255,255,.026)';
   if (((c + r) % 2) === 0) { ctx.fillRect(sx, sy, s, s); }
-  if (r === 20 || r === 19) {
+  if (r === 20) {
     ctx.fillStyle = 'rgba(255,223,138,.42)';
     ctx.fillRect(sx + 2 * k, sy + s - 3 * k, 14 * k, 2.4 * k);
   }
@@ -1702,6 +1861,92 @@ function drawTerrain() {
       var f = TILE_DRAW[t] || drawStone;
       f(c, r, Math.round((c * TILE - cam.x) * zoom), Math.round((r * TILE - cam.y) * zoom), ss);
     }
+  }
+}
+
+/* ---- 地面标识（纯装饰，不影响碰撞） ---- */
+function drawGroundPaint() {
+  var list = G.level.paint;
+  if (!list || !list.length) { return; }
+  var s = zoom;
+  for (var i = 0; i < list.length; i++) {
+    var p = list[i];
+    var x = worldToScreenX(p.x * TILE), y = worldToScreenY(p.y * TILE);
+    var w = p.w * TILE * s, h = p.h * TILE * s;
+    if (x > vw || x + w < 0 || y > vh || y + h < 0) { continue; }
+    ctx.save();
+    switch (p.k) {
+      /* 叉车 / 车辆通道：两端带箭头的黄色虚线 */
+      case 'lane':
+        ctx.fillStyle = p.c || 'rgba(255,223,138,.36)';
+        var seg = 14 * s, gap = 12 * s, cx = x + 3 * s;
+        while (cx < x + w - 3 * s) {
+          ctx.fillRect(cx, y + h / 2 - 1.6 * s, Math.min(seg, x + w - 3 * s - cx), 3.2 * s);
+          cx += seg + gap;
+        }
+        break;
+      /* 停车位 / 装卸位 */
+      case 'bay':
+        ctx.strokeStyle = p.c || 'rgba(200,224,255,.42)';
+        ctx.lineWidth = 2 * s;
+        var n = Math.max(1, Math.round(p.w / 2));
+        for (var b = 0; b <= n; b++) {
+          var bx = x + b * (w / n);
+          ctx.beginPath(); ctx.moveTo(bx, y); ctx.lineTo(bx, y + h); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
+        break;
+      /* 黄黑警示斜纹 */
+      case 'hazard':
+        var hstep = 12 * s;
+        ctx.globalAlpha = 0.5;
+        for (var q = -h; q < w; q += hstep * 2) {
+          ctx.fillStyle = '#f0c040';
+          ctx.beginPath();
+          ctx.moveTo(x + q, y + h); ctx.lineTo(x + q + hstep, y + h);
+          ctx.lineTo(x + q + hstep + h, y); ctx.lineTo(x + q + h, y);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        break;
+      /* 人行横道 */
+      case 'cross':
+        ctx.fillStyle = 'rgba(226,236,255,.62)';
+        var cn = Math.max(2, Math.round(p.w / 1.4));
+        for (var cc = 0; cc < cn; cc++) {
+          ctx.fillRect(x + cc * (w / cn) + (w / cn) * 0.18, y, (w / cn) * 0.5, h);
+        }
+        break;
+      /* 停止线 */
+      case 'stop':
+        ctx.fillStyle = 'rgba(226,236,255,.6)';
+        ctx.fillRect(x, y, w, h);
+        break;
+      /* 白色虚线 */
+      case 'dash':
+        ctx.fillStyle = p.c || 'rgba(226,236,255,.4)';
+        var dseg = 12 * s, dgap = 12 * s, dx = x;
+        while (dx < x + w) { ctx.fillRect(dx, y, Math.min(dseg, x + w - dx), h); dx += dseg + dgap; }
+        break;
+      /* 浅色引导网格 */
+      case 'grid':
+        ctx.strokeStyle = p.c || 'rgba(120,165,235,.16)';
+        ctx.lineWidth = 1.4 * s;
+        for (var gx = x; gx <= x + w + 0.5; gx += TILE * s) {
+          ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+        }
+        for (var gy = y; gy <= y + h + 0.5; gy += TILE * s) {
+          ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+        }
+        break;
+      /* 地面文字标线（用色块近似） */
+      case 'mark':
+        ctx.fillStyle = p.c || 'rgba(255,223,138,.5)';
+        ctx.fillRect(x, y, w, h);
+        break;
+      default: break;
+    }
+    ctx.restore();
   }
 }
 
@@ -1882,27 +2127,35 @@ function drawBuilding(o) {
   ctx.fillStyle = 'rgba(255,255,255,.07)';
   ctx.fillRect(x, y, w, 4);
   /* 屋顶设备 */
-  ctx.fillStyle = '#0f2140';
+  ctx.fillStyle = '#2c4d84';
   var n = Math.max(2, Math.floor(w / 90));
   for (var i = 0; i < n; i++) {
     var bx = x + 12 + i * (w - 24) / n;
-    ctx.fillRect(bx, y + 12, Math.max(10, w / n * 0.34), Math.max(8, h * 0.16));
+    var uw = Math.max(10, w / n * 0.34), uh = Math.max(8, h * 0.16);
+    ctx.fillRect(bx, y + 12, uw, uh);
+    ctx.fillStyle = 'rgba(160,200,255,.28)';
+    ctx.fillRect(bx, y + 12, uw, 2.4 * zoom);
+    ctx.fillStyle = '#2c4d84';
   }
   /* 天窗 */
-  ctx.fillStyle = 'rgba(255,223,138,.34)';
+  ctx.fillStyle = 'rgba(255,223,138,.55)';
   for (var j = 0; j < n; j++) {
-    ctx.fillRect(x + 12 + j * (w - 24) / n, y + h * 0.6, Math.max(8, w / n * 0.3), Math.max(5, h * 0.1));
+    var sx2 = x + 12 + j * (w - 24) / n;
+    ctx.fillRect(sx2, y + h * 0.6, Math.max(8, w / n * 0.3), Math.max(5, h * 0.1));
   }
   /* 边框 */
-  ctx.strokeStyle = 'rgba(140,190,255,.34)';
+  ctx.strokeStyle = 'rgba(150,195,255,.55)';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
   /* 标签 */
-  if (o.label && zoom > 1.15) {
-    ctx.fillStyle = 'rgba(255,223,138,.9)';
+  if (o.label && zoom >= 1.1) {
     ctx.font = 'bold ' + Math.round(12 * zoom) + 'px ' + getComputedStyle(document.body).fontFamily;
     ctx.textAlign = 'center';
-    ctx.fillText(o.label, x + w / 2, y + h / 2 + 4);
+    var tw2 = ctx.measureText(o.label).width + 14 * zoom;
+    ctx.fillStyle = 'rgba(6,16,36,.72)';
+    ctx.fillRect(x + w / 2 - tw2 / 2, y + h / 2 - 11 * zoom, tw2, 20 * zoom);
+    ctx.fillStyle = 'rgba(255,223,138,.95)';
+    ctx.fillText(o.label, x + w / 2, y + h / 2 + 4 * zoom);
     ctx.textAlign = 'left';
   }
   ctx.restore();
@@ -1995,6 +2248,223 @@ function drawFlag(o) {
   ctx.closePath(); ctx.fill();
   ctx.fillStyle = 'rgba(255,223,138,.92)';
   for (var i = 0; i < 3; i++) { ctx.fillRect(cx + 5 * s, cy - 34 * s + i * 4.4 * s, 15 * s, 1.6 * s); }
+  ctx.restore();
+}
+
+/* ---- 系船柱（缆桩） ---- */
+function drawBollard(o) {
+  var cx = worldToScreenX(tx(o.x)), cy = worldToScreenY(ty(o.y));
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.36)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 6 * s, 8 * s, 3.2 * s, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#2b3a56';
+  ctx.beginPath();
+  ctx.moveTo(cx - 6 * s, cy + 6 * s);
+  ctx.lineTo(cx - 4.4 * s, cy - 6 * s);
+  ctx.lineTo(cx + 4.4 * s, cy - 6 * s);
+  ctx.lineTo(cx + 6 * s, cy + 6 * s);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4a5f85';
+  ctx.beginPath(); ctx.ellipse(cx, cy - 6.5 * s, 4.6 * s, 2.2 * s, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,223,138,.55)';
+  ctx.fillRect(cx - 5.4 * s, cy - 2.2 * s, 10.8 * s, 1.8 * s);
+  ctx.restore();
+}
+
+/* ---- 电缆盘 ---- */
+function drawReel(o) {
+  var cx = worldToScreenX(tx(o.x)), cy = worldToScreenY(ty(o.y));
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.36)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 9 * s, 13 * s, 5 * s, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#7b5a2c';
+  ctx.beginPath(); ctx.arc(cx, cy, 12.5 * s, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#a8763a';
+  ctx.beginPath(); ctx.arc(cx, cy, 10.5 * s, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = '#3b2a12';
+  ctx.lineWidth = 2.6 * s;
+  ctx.beginPath(); ctx.arc(cx, cy, 8.4 * s, 0, 6.3); ctx.stroke();
+  ctx.fillStyle = '#22304a';
+  ctx.beginPath(); ctx.arc(cx, cy, 3.4 * s, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,223,138,.45)';
+  ctx.lineWidth = 1.4 * s;
+  ctx.beginPath(); ctx.arc(cx, cy, 12.5 * s, 0, 6.3); ctx.stroke();
+  ctx.restore();
+}
+
+/* ---- 托盘货垛 ---- */
+function drawPallet(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.36)';
+  ctx.fillRect(x + 3 * s, y + 5 * s, w, h);
+  /* 木托盘 */
+  ctx.fillStyle = '#6d4b1e';
+  ctx.fillRect(x, y + h * 0.56, w, h * 0.44);
+  ctx.fillStyle = '#8a5f2b';
+  for (var i = 0; i < o.w * 2; i++) {
+    ctx.fillRect(x + i * (w / (o.w * 2)) + 1.5 * s, y + h * 0.6, w / (o.w * 2) - 3 * s, h * 0.36);
+  }
+  /* 货箱 */
+  ctx.fillStyle = '#b98a44';
+  ctx.fillRect(x + 3 * s, y + h * 0.06, w - 6 * s, h * 0.5);
+  ctx.strokeStyle = 'rgba(60,40,14,.7)';
+  ctx.lineWidth = 1.4 * s;
+  ctx.strokeRect(x + 3 * s, y + h * 0.06, w - 6 * s, h * 0.5);
+  ctx.beginPath();
+  ctx.moveTo(x + 3 * s, y + h * 0.31);
+  ctx.lineTo(x + w - 3 * s, y + h * 0.31);
+  ctx.stroke();
+  /* 缠膜高光 */
+  ctx.fillStyle = 'rgba(255,255,255,.16)';
+  ctx.fillRect(x + 3 * s, y + h * 0.06, w - 6 * s, 3 * s);
+  ctx.restore();
+}
+
+/* ---- 龙门吊（横梁 / 立柱） ---- */
+function drawCraneBeam(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  /* 桁架主梁 */
+  var g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, 'rgba(60,96,160,.9)');
+  g.addColorStop(0.45, 'rgba(30,56,104,.9)');
+  g.addColorStop(1, 'rgba(16,32,64,.9)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y + h * 0.34, w, h * 0.34);
+  ctx.strokeStyle = 'rgba(140,190,255,.5)';
+  ctx.lineWidth = 1.6 * s;
+  ctx.strokeRect(x, y + h * 0.34, w, h * 0.34);
+  /* 桁架斜撑 */
+  ctx.strokeStyle = 'rgba(120,170,235,.42)';
+  ctx.lineWidth = 1.2 * s;
+  for (var i = 0; i < o.w * 2; i++) {
+    var px = x + i * (w / (o.w * 2));
+    ctx.beginPath();
+    ctx.moveTo(px, y + h * 0.34);
+    ctx.lineTo(px + w / (o.w * 2), y + h * 0.68);
+    ctx.moveTo(px + w / (o.w * 2), y + h * 0.34);
+    ctx.lineTo(px, y + h * 0.68);
+    ctx.stroke();
+  }
+  /* 小车与吊具 */
+  ctx.fillStyle = '#c9931f';
+  ctx.fillRect(x + w * 0.475, y + h * 0.26, w * 0.05, h * 0.44);
+  ctx.strokeStyle = 'rgba(255,223,138,.7)';
+  ctx.lineWidth = 1.2 * s;
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.5, y + h * 0.7);
+  ctx.lineTo(x + w * 0.5, y + h * 0.95);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawCranePost(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.42)';
+  ctx.fillRect(x + 4 * s, y + 4 * s, w, h);
+  var g = ctx.createLinearGradient(x, 0, x + w, 0);
+  g.addColorStop(0, '#16294a');
+  g.addColorStop(0.42, '#3a5f9e');
+  g.addColorStop(1, '#16294a');
+  ctx.fillStyle = g;
+  ctx.fillRect(x + w * 0.1, y, w * 0.8, h);
+  /* 行走轮 */
+  ctx.fillStyle = '#0d1626';
+  ctx.fillRect(x, y + h - 6 * s, w, 6 * s);
+  ctx.fillStyle = 'rgba(255,223,138,.8)';
+  ctx.fillRect(x + w * 0.06, y + 2 * s, w * 0.88, 2.6 * s);
+  ctx.fillRect(x + w * 0.06, y + h - 12 * s, w * 0.88, 2 * s);
+  ctx.restore();
+}
+
+/* ---- 地磅（可通行） ---- */
+function drawWeighbridge(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(20,32,56,.72)';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = 'rgba(150,180,225,.2)';
+  ctx.fillRect(x + 2 * s, y + 2 * s, w - 4 * s, h - 4 * s);
+  /* 称重格栅 */
+  ctx.strokeStyle = 'rgba(200,220,255,.4)';
+  ctx.lineWidth = 1.4 * s;
+  for (var i = 1; i < o.w * 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x + i * (w / (o.w * 2)), y + 3 * s);
+    ctx.lineTo(x + i * (w / (o.w * 2)), y + h - 3 * s);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,223,138,.85)';
+  ctx.lineWidth = 2 * s;
+  ctx.strokeRect(x + 1 * s, y + 1 * s, w - 2 * s, h - 2 * s);
+  /* 限位标线 */
+  ctx.fillStyle = 'rgba(255,223,138,.5)';
+  ctx.fillRect(x + w * 0.08, y + h * 0.18, w * 0.84, 1.8 * s);
+  ctx.fillRect(x + w * 0.08, y + h * 0.78, w * 0.84, 1.8 * s);
+  ctx.restore();
+}
+
+/* ---- 宣传横幅 ---- */
+function drawBanner(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  var wave = Math.sin(G.t * 1.8 + o.x * 0.5) * 2.2 * s;
+  ctx.save();
+  /* 立杆 */
+  ctx.fillStyle = '#9db2d8';
+  ctx.fillRect(x + 2 * s, y - 20 * s, 3 * s, h + 22 * s);
+  ctx.fillRect(x + w - 5 * s, y - 20 * s, 3 * s, h + 22 * s);
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(x + 3 * s, y + h + 2 * s, 5 * s, 2 * s, 0, 0, 6.3); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + w - 3 * s, y + h + 2 * s, 5 * s, 2 * s, 0, 0, 6.3); ctx.fill();
+  /* 布面 */
+  var g = ctx.createLinearGradient(x, y, x + w, y);
+  g.addColorStop(0, '#c9282a');
+  g.addColorStop(0.5, '#e04445');
+  g.addColorStop(1, '#c9282a');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x + 4 * s, y - 14 * s);
+  ctx.quadraticCurveTo(x + w * 0.5, y - 16 * s + wave, x + w - 4 * s, y - 14 * s);
+  ctx.lineTo(x + w - 4 * s, y + h * 0.24 * s);
+  ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.24 * s + wave, x + 4 * s, y + h * 0.24 * s);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,240,200,.94)';
+  for (var i = 0; i < 6; i++) {
+    ctx.fillRect(x + w * 0.12 + i * w * 0.13, y - 10 * s, w * 0.07, h * 0.2 * s + 3 * s);
+  }
+  ctx.restore();
+}
+
+/* ---- 指路牌 ---- */
+function drawSign(o) {
+  var cx = worldToScreenX(tx(o.x)), cy = worldToScreenY(ty(o.y));
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.34)';
+  ctx.beginPath(); ctx.ellipse(cx + 2 * s, cy + 8 * s, 7 * s, 2.8 * s, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = '#8fa4c8';
+  ctx.fillRect(cx - 1.6 * s, cy - 20 * s, 3.2 * s, 28 * s);
+  ctx.fillStyle = '#1f4f9c';
+  ctx.fillRect(cx - 15 * s, cy - 32 * s, 30 * s, 14 * s);
+  ctx.strokeStyle = 'rgba(240,192,64,.8)';
+  ctx.lineWidth = 1.6 * s;
+  ctx.strokeRect(cx - 14 * s, cy - 31 * s, 28 * s, 12 * s);
+  ctx.fillStyle = 'rgba(255,223,138,.92)';
+  ctx.fillRect(cx - 9 * s, cy - 27 * s, 18 * s, 2 * s);
+  ctx.fillRect(cx - 9 * s, cy - 23.4 * s, 12 * s, 2 * s);
   ctx.restore();
 }
 
@@ -2526,6 +2996,9 @@ function render() {
   /* 地形（屏幕坐标绘制） */
   drawTerrain();
 
+  /* 地面标识（车道线 / 停车位 / 警戒线等） */
+  drawGroundPaint();
+
   /* 目标地面光圈（在实体下方） */
   for (var i0 = 0; i0 < G.items.length; i0++) {
     var it0 = G.items[i0];
@@ -2623,6 +3096,14 @@ function drawObstacle(o) {
     case 'forklift': drawForklift(o); break;
     case 'cone': drawCone(o); break;
     case 'flag': drawFlag(o); break;
+    case 'bollard': drawBollard(o); break;
+    case 'reel': drawReel(o); break;
+    case 'pallet': drawPallet(o); break;
+    case 'cranebeam': drawCraneBeam(o); break;
+    case 'cranepost': drawCranePost(o); break;
+    case 'weighbridge': drawWeighbridge(o); break;
+    case 'banner': drawBanner(o); break;
+    case 'sign': drawSign(o); break;
     default: break;
   }
 }
@@ -2974,7 +3455,9 @@ function beginFinale() {
    11. 关卡流程
    ============================================================ */
 function buildLevel(idx) {
+  idx = clamp(idx, 0, LEVELS.length - 1);
   var lv = LEVELS[idx];
+  if (!lv) { return; }
   G.level = lv;
   G.levelIdx = idx;
   G.obstacles = lv.obstacles.slice();
@@ -2998,13 +3481,8 @@ function buildLevel(idx) {
   G.solids = [];
   for (var i = 0; i < G.obstacles.length; i++) {
     var o = G.obstacles[i];
-    var solid = false;
-    switch (o.k) {
-      case 'container': case 'building': case 'barrel': case 'crate':
-      case 'rail': case 'boardobj': case 'truck': case 'forklift':
-        solid = true; break;
-      default: solid = false;
-    }
+    var solid = (SOLID_KINDS[o.k] === 1);
+    if (typeof o.s === 'boolean') { solid = o.s; }
     if (solid) {
       G.solids.push({ x1: o.x * TILE, y1: o.y * TILE, x2: (o.x + o.w) * TILE, y2: (o.y + o.h) * TILE });
     }
@@ -3018,7 +3496,9 @@ function buildLevel(idx) {
 }
 
 function showBrief(idx) {
+  idx = clamp(idx, 0, LEVELS.length - 1);
   var lv = LEVELS[idx];
+  if (!lv) { return; }
   $('#briefIdx').textContent = lv.code;
   $('#briefName').textContent = lv.name;
   $('#briefDesc').textContent = lv.desc;
@@ -3053,7 +3533,7 @@ function fadeIn(sec, cb) {
   var f = $('#fade');
   f.classList.add('show');
   setTimeout(function () {
-    if (cb) { cb(); }
+    try { if (cb) { cb(); } } catch (e) { /* 保证遮罩一定被清除，避免黑屏 */ }
     f.classList.remove('show');
   }, Math.round(sec * 1000));
 }
