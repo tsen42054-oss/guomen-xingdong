@@ -723,6 +723,25 @@ ul{margin:0;}
   font-size:14px;line-height:1.85;color:#ffe0c4;text-align:center;letter-spacing:.4px;
 }
 .end-note{margin-top:13px;font-size:11px;line-height:1.7;color:var(--ink-mute);text-align:center;}
+
+/* 行动复盘 · 结语（通关后的主题阐述与普法资料来源） */
+.end-prologue{
+  text-align:left;padding:14px 15px;border-radius:13px;margin:14px 0 2px;
+  background:linear-gradient(180deg,rgba(14,36,72,.92),rgba(6,16,34,.92));
+  border:1px solid var(--line);border-left:3px solid var(--orange-500);
+}
+.end-prologue .ep-title{font-size:14px;font-weight:800;letter-spacing:1.6px;color:#ffdf8a;margin-bottom:7px;}
+.end-prologue .ep-lead{
+  font-size:13px;font-weight:700;color:var(--blue-300);line-height:1.8;
+  letter-spacing:.6px;margin-bottom:10px;
+}
+.end-prologue p{font-size:12.5px;line-height:1.9;color:#bdd2f2;margin:0 0 9px;}
+.end-prologue p:last-child{margin-bottom:0;}
+.end-prologue .ep-strong{color:#ffe0c4;font-weight:700;}
+.end-prologue .ep-src{
+  margin-top:11px;padding-top:9px;border-top:1px dashed rgba(255,255,255,.14);
+  font-size:11px;line-height:1.75;color:var(--ink-mute);
+}
 .ov-actions{display:flex;flex-direction:column;gap:10px;margin-top:15px;}
 .ov-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
@@ -976,6 +995,7 @@ ul{margin:0;}
       <div class="stat-grid" id="endStats"></div>
       <div class="score-list" id="endScores"></div>
       <div class="gain-list" id="endGains"></div>
+      <div class="end-prologue" id="endPrologue"></div>
       <div class="end-slogan" id="endSlogan">—</div>
       <div class="ov-actions">
         <button class="btn btn-primary btn-lg" id="btnEndRetry" type="button">再 次 巡 查</button>
@@ -5148,6 +5168,19 @@ function buildEndReview(r) {
   return out;
 }
 
+/* 通关后的「行动复盘」结语：主题阐述 + 普法资料来源 */
+function buildEndPrologue() {
+  return '<div class="ep-title">《国门行动：暗线追踪》</div>' +
+    '<div class="ep-lead">以证据揭开疑云，以行动守护国门。</div>' +
+    '<p>走私不仅扰乱正常的经济秩序，也可能危害国家安全、市场公平、生态环境与人民群众的生命健康。' +
+    '反走私不仅是有关部门的职责，更需要社会公众共同参与。</p>' +
+    '<p>在《国门行动：暗线追踪》中，你将进入虚构的现代港口，化身国门安全协作人员，' +
+    '通过现场调查、线索搜集、证据比对与策略研判，逐步查明事件真相，作出审慎、合规的处置决定。</p>' +
+    '<p>面对疑点，你需要保持冷静；面对证据，你需要认真核实；面对选择，你需要坚持法治原则。</p>' +
+    '<p class="ep-strong">守护国门安全，从识别风险、尊重法律、拒绝走私、理性参与开始。</p>' +
+    '<p class="ep-src">资料参考：司法部关于反走私宣传教育的法规资料，以及检察机关、海警和地方政府发布的普法报道。</p>';
+}
+
 function endGame() {
   cineEnd();
   G.boomT = G.boomTarget;   // 结算前让道闸动画收尾到最终状态
@@ -5171,6 +5204,7 @@ function endGame() {
   $('#endScores').innerHTML = buildEndScores(r);
   animateScoreBars($('#endScores'));
   $('#endGains').innerHTML = buildEndReview(r);
+  $('#endPrologue').innerHTML = buildEndPrologue();
   $('#endSlogan').textContent = '“' + r.slogan + '”';
   save.best = Math.max(save.best || 0, r.score);
   save.rank = r.letter;
