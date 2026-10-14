@@ -3479,8 +3479,357 @@ function drawBoardObj(o) {
 
 /* ---- 角色 ---- */
 var dbgDrawn = { ticks: 0, player: 0, marker: 0, chars: 0, listLen: 0 };
+/* ---------- 玩家角色：反走私吉祥物「小龙」（Q 版红龙） ----------
+   严格按三视图还原：红身 + 白色口鼻/肚皮 + 金色火焰鬃毛（头顶卷毛 + 两侧尖瓣）
+   + 金色龙角 + 白色手套 + 带金色尾刺的尾巴 + 胸前反走私徽记。 */
+var DRG = {
+  red: '#e02a24', redD: '#a8161a', redL: '#f4524a',
+  gold: '#ffd21e', goldL: '#ffea96', goldD: '#d99a06',
+  cream: '#fdf7ec', creamD: '#e3d5c0',
+  eye: '#1b1a21', blush: '#ff9a9a', mouth: '#7d1717', tongue: '#ff7a84',
+  out: 'rgba(122,17,15,.5)'
+};
+
+/* 火焰状金色鬃毛：中心圆 + 若干尖瓣。同一形状填两次即可得到描边感。 */
+function dragonTuft(cx, cy, R, rot, tips) {
+  var n = tips || 6;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 0.68, 0, 6.3);
+  ctx.fill();
+  for (var i = 0; i < n; i++) {
+    var a = rot + (i / n) * 6.2832;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a - 0.54) * R * 0.62, cy + Math.sin(a - 0.54) * R * 0.62);
+    ctx.quadraticCurveTo(cx + Math.cos(a - 0.2) * R * 1.2, cy + Math.sin(a - 0.2) * R * 1.2,
+      cx + Math.cos(a) * R * 1.55, cy + Math.sin(a) * R * 1.55);
+    ctx.quadraticCurveTo(cx + Math.cos(a + 0.2) * R * 1.2, cy + Math.sin(a + 0.2) * R * 1.2,
+      cx + Math.cos(a + 0.54) * R * 0.62, cy + Math.sin(a + 0.54) * R * 0.62);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawDragonChar(e) {
+  var x = worldToScreenX(e.x), y = worldToScreenY(e.y);
+  var u = zoom;
+  var moving = !!e.moving;
+  var ph = e.anim * 9.5;
+  var swing = moving ? Math.sin(ph) : 0;
+  var bob = moving ? Math.abs(Math.sin(ph)) * 1.5 : Math.sin(G.t * 2 + (e.seed || 0)) * 0.8;
+  var dir = e.dir || 'down';
+  var by = y - bob * u;
+  var side = (dir === 'left' || dir === 'right');
+  var face = (dir === 'down');
+  var back = (dir === 'up');
+  var dx = (dir === 'left') ? -1 : 1;
+  var lw = Math.max(0.8, 0.95 * u);
+  var lean = swing * 1.6 * u;
+  var armSw = side ? 0 : swing * 2.0 * u;
+  var sway = Math.sin(G.t * 2.1 + (e.seed || 0)) * 1.4 * u;
+  var bodyCy = by - 0.8 * u;
+  var headCy = by - 14.8 * u;
+  var headR = 9.6 * u;
+  var hx = x + (side ? dx * 1.5 * u : 0);
+
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  /* 柔影 */
+  var shY = y + 11.6 * u;
+  var shg = ctx.createRadialGradient(x, shY, 0, x, shY, 14.5 * u);
+  shg.addColorStop(0, 'rgba(0,0,0,.46)');
+  shg.addColorStop(0.55, 'rgba(0,0,0,.2)');
+  shg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shg;
+  ctx.beginPath(); ctx.ellipse(x, shY, 14.5 * u, 5.8 * u, 0, 0, 6.3); ctx.fill();
+
+  /* ---- 尾巴（背身 / 侧身时才甩出来，正面收在身后） ---- */
+  if (!face) {
+    var tdx = side ? -dx : 1;
+    var bx0 = x + tdx * 1.2 * u, by0 = bodyCy + 4.0 * u;
+    var len = 12.0 * u;
+    ctx.beginPath();
+    ctx.moveTo(bx0 - tdx * 1.4 * u, by0 + 3.6 * u);
+    ctx.quadraticCurveTo(bx0 + tdx * len * 0.55, by0 + 5.0 * u, bx0 + tdx * len, by0 - 3.2 * u + sway);
+    ctx.quadraticCurveTo(bx0 + tdx * len * 0.52, by0 - 1.2 * u, bx0 + tdx * 1.4 * u, by0 - 3.8 * u);
+    ctx.closePath();
+    ctx.fillStyle = DRG.red;
+    ctx.fill();
+    ctx.strokeStyle = DRG.out; ctx.lineWidth = lw; ctx.stroke();
+    for (var i = 0; i < 3; i++) {
+      var t = 0.42 + i * 0.2;
+      var sx2 = bx0 + tdx * len * t;
+      var sy2 = by0 + 3.0 * u - t * 5.0 * u + sway * t;
+      ctx.beginPath();
+      ctx.moveTo(sx2 - tdx * 1.3 * u, sy2 + 1.5 * u);
+      ctx.lineTo(sx2 + tdx * 0.5 * u, sy2 - 3.2 * u - i * 0.5 * u);
+      ctx.lineTo(sx2 + tdx * 1.5 * u, sy2 + 1.5 * u);
+      ctx.closePath();
+      ctx.fillStyle = (i === 2) ? DRG.goldL : DRG.gold;
+      ctx.fill();
+    }
+  }
+
+  /* ---- 腿 + 脚 ---- */
+  var legY = by + 3.4 * u, legH = 8.2 * u;
+  if (side) {
+    rrFill(DRG.redD, x - 4.4 * u, legY, 8.0 * u, legH, 3.2 * u);
+    rrFill(DRG.red, x - 5.2 * u, legY + 5.4 * u, 10.0 * u, 3.6 * u, 1.8 * u);
+    rrStroke(DRG.out, lw, x - 5.2 * u, legY + 5.4 * u, 10.0 * u, 3.6 * u, 1.8 * u);
+  } else {
+    rrFill(DRG.redD, x - 6.9 * u, legY + lean, 5.0 * u, legH, 2.5 * u);
+    rrFill(DRG.redD, x + 1.9 * u, legY - lean, 5.0 * u, legH, 2.5 * u);
+    rrFill(DRG.red, x - 7.6 * u, legY + 5.4 * u + lean, 6.4 * u, 3.5 * u, 1.75 * u);
+    rrFill(DRG.red, x + 1.2 * u, legY + 5.4 * u - lean, 6.4 * u, 3.5 * u, 1.75 * u);
+    rrStroke(DRG.out, lw, x - 7.6 * u, legY + 5.4 * u + lean, 6.4 * u, 3.5 * u, 1.75 * u);
+    rrStroke(DRG.out, lw, x + 1.2 * u, legY + 5.4 * u - lean, 6.4 * u, 3.5 * u, 1.75 * u);
+  }
+
+  /* ---- 身体 ---- */
+  var bw = side ? 14.8 * u : 17.0 * u, bh = 14.0 * u;
+  var bgx = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0);
+  bgx.addColorStop(0, DRG.redD);
+  bgx.addColorStop(0.3, DRG.red);
+  bgx.addColorStop(0.68, DRG.red);
+  bgx.addColorStop(1, DRG.redD);
+  rrectPath(x - bw / 2, bodyCy - bh / 2, bw, bh, bh * 0.48);
+  ctx.fillStyle = bgx; ctx.fill();
+  var bgy = ctx.createLinearGradient(0, bodyCy - bh / 2, 0, bodyCy + bh / 2);
+  bgy.addColorStop(0, 'rgba(255,255,255,.22)');
+  bgy.addColorStop(0.44, 'rgba(255,255,255,0)');
+  bgy.addColorStop(1, 'rgba(0,0,0,.24)');
+  rrectPath(x - bw / 2, bodyCy - bh / 2, bw, bh, bh * 0.48);
+  ctx.fillStyle = bgy; ctx.fill();
+  rrStroke(DRG.out, lw, x - bw / 2, bodyCy - bh / 2, bw, bh, bh * 0.48);
+
+  if (back) {
+    /* 背身：金色鬃毛沿脊背垂下 */
+    var mg = ctx.createLinearGradient(0, bodyCy - bh / 2, 0, bodyCy + bh / 2 + 2 * u);
+    mg.addColorStop(0, DRG.goldL);
+    mg.addColorStop(0.5, DRG.gold);
+    mg.addColorStop(1, DRG.goldD);
+    ctx.fillStyle = mg;
+    rrectPath(x - 2.8 * u, bodyCy - bh / 2 - 1 * u, 5.6 * u, bh + 2.4 * u, 2.8 * u);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(176,118,0,.42)'; ctx.lineWidth = lw; ctx.stroke();
+  } else {
+    /* 白肚皮 */
+    var cg = ctx.createRadialGradient(x - 2 * u, bodyCy - 1 * u, 1, x, bodyCy + 1 * u, 8.4 * u);
+    cg.addColorStop(0, '#ffffff');
+    cg.addColorStop(1, DRG.creamD);
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.ellipse(x + (side ? dx * 1.2 * u : 0), bodyCy + 1.0 * u, 6.4 * u, 5.4 * u, 0, 0, 6.3);
+    ctx.fill();
+    /* 胸前徽记（盾形 + 三道白色笔触，源自吉祥物胸前标识） */
+    if (!side) {
+      ctx.fillStyle = DRG.red;
+      ctx.beginPath();
+      ctx.moveTo(x, bodyCy - 3.2 * u);
+      ctx.lineTo(x + 2.5 * u, bodyCy - 1.8 * u);
+      ctx.lineTo(x + 1.9 * u, bodyCy + 2.6 * u);
+      ctx.lineTo(x, bodyCy + 3.9 * u);
+      ctx.lineTo(x - 1.9 * u, bodyCy + 2.6 * u);
+      ctx.lineTo(x - 2.5 * u, bodyCy - 1.8 * u);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.88)';
+      for (var k = 0; k < 3; k++) {
+        ctx.fillRect(x - 1.35 * u + k * 0.95 * u, bodyCy - 1.0 * u, 0.7 * u, 3.4 * u - k * 0.55 * u);
+      }
+    }
+  }
+
+  /* ---- 手臂 + 白手套 ---- */
+  if (side) {
+    rrFill(DRG.red, x - 2.4 * u, bodyCy - 4.2 * u, 5.4 * u, 8.8 * u, 2.7 * u);
+    rrStroke(DRG.out, lw, x - 2.4 * u, bodyCy - 4.2 * u, 5.4 * u, 8.8 * u, 2.7 * u);
+    ctx.fillStyle = DRG.cream;
+    ctx.beginPath(); ctx.arc(x + dx * 1.6 * u, bodyCy + 5.0 * u, 2.9 * u, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = DRG.out; ctx.lineWidth = lw; ctx.stroke();
+  } else {
+    rrFill(DRG.red, x - 11.0 * u, bodyCy - 4.4 * u + armSw, 5.0 * u, 9.2 * u, 2.5 * u);
+    rrFill(DRG.red, x + 6.0 * u, bodyCy - 4.4 * u - armSw, 5.0 * u, 9.2 * u, 2.5 * u);
+    ctx.fillStyle = DRG.cream;
+    ctx.beginPath(); ctx.arc(x - 8.5 * u, bodyCy + 5.2 * u + armSw, 3.0 * u, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = DRG.out; ctx.lineWidth = lw; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + 8.5 * u, bodyCy + 5.2 * u - armSw, 3.0 * u, 0, 6.3); ctx.fill();
+    ctx.stroke();
+  }
+
+  /* ---- 头两侧的金色鬃毛（画在头之前，让头压住根部） ---- */
+  var tufR = 4.5 * u;
+  var tg2 = ctx.createRadialGradient(hx - 2 * u, headCy - 2 * u, 1, hx, headCy, headR + tufR);
+  tg2.addColorStop(0, DRG.goldL);
+  tg2.addColorStop(0.55, DRG.gold);
+  tg2.addColorStop(1, DRG.goldD);
+  var sgnList = side ? [(dir === 'left' ? 1 : -1)] : [-1, 1];
+  for (var ti = 0; ti < sgnList.length; ti++) {
+    var sgn = sgnList[ti];
+    var tcx = hx + sgn * headR * 0.86;
+    var tcy = headCy + 1.2 * u;
+    ctx.fillStyle = DRG.goldD;
+    dragonTuft(tcx, tcy, tufR * 1.08, sgn > 0 ? 0.22 : Math.PI - 0.22, 5);
+    ctx.fillStyle = tg2;
+    dragonTuft(tcx, tcy, tufR, sgn > 0 ? 0.22 : Math.PI - 0.22, 5);
+  }
+
+  /* ---- 红色小角/耳（在鬃毛之后、头之前） ---- */
+  var earList = side ? [dx] : [-1, 1];
+  for (var ei0 = 0; ei0 < earList.length; ei0++) {
+    var esg = earList[ei0];
+    var ex0 = hx + esg * headR * 0.66, ey0 = headCy - headR * 0.56;
+    ctx.beginPath();
+    ctx.moveTo(ex0 - esg * 2.4 * u, ey0 + 2.6 * u);
+    ctx.quadraticCurveTo(ex0 + esg * 0.4 * u, ey0 - 4.4 * u, ex0 + esg * 3.4 * u, ey0 - 1.4 * u);
+    ctx.quadraticCurveTo(ex0 + esg * 1.8 * u, ey0 + 2.8 * u, ex0 - esg * 2.4 * u, ey0 + 2.6 * u);
+    ctx.closePath();
+    ctx.fillStyle = DRG.red;
+    ctx.fill();
+    ctx.strokeStyle = DRG.out; ctx.lineWidth = lw; ctx.stroke();
+  }
+
+  /* ---- 头 ---- */
+  var hg = ctx.createRadialGradient(hx - headR * 0.36, headCy - headR * 0.42, headR * 0.12, hx, headCy, headR * 1.16);
+  hg.addColorStop(0, DRG.redL);
+  hg.addColorStop(0.52, DRG.red);
+  hg.addColorStop(1, DRG.redD);
+  ctx.beginPath();
+  ctx.ellipse(hx, headCy, headR, headR * 1.03, 0, 0, 6.3);
+  ctx.fillStyle = hg;
+  ctx.fill();
+  ctx.strokeStyle = DRG.out; ctx.lineWidth = lw; ctx.stroke();
+
+  /* ---- 白色口鼻 + 五官 ---- */
+  var mzx = side ? hx + dx * 3.2 * u : hx;
+  var mzy = headCy + 3.0 * u;
+  if (!back) {
+    var mg2 = ctx.createRadialGradient(mzx - 1.6 * u, mzy - 1.6 * u, 1, mzx, mzy, 7.2 * u);
+    mg2.addColorStop(0, '#ffffff');
+    mg2.addColorStop(0.72, DRG.cream);
+    mg2.addColorStop(1, DRG.creamD);
+    ctx.beginPath();
+    ctx.ellipse(mzx, mzy, 6.3 * u, 5.0 * u, 0, 0, 6.3);
+    ctx.fillStyle = mg2;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150,130,110,.26)'; ctx.lineWidth = lw * 0.8; ctx.stroke();
+
+    /* 眼睛：大而圆，压在口鼻上缘 */
+    var eyes = side ? [hx + dx * 2.2 * u] : [hx - 3.9 * u, hx + 3.9 * u];
+    var eyY = headCy - 1.4 * u;
+    for (var ei = 0; ei < eyes.length; ei++) {
+      var exx = eyes[ei];
+      ctx.beginPath();
+      ctx.ellipse(exx, eyY, 2.15 * u, 2.9 * u, 0, 0, 6.3);
+      ctx.fillStyle = DRG.eye;
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.beginPath(); ctx.arc(exx - 0.72 * u, eyY - 1.05 * u, 0.88 * u, 0, 6.3); ctx.fill();
+      ctx.beginPath(); ctx.arc(exx + 0.88 * u, eyY + 1.2 * u, 0.45 * u, 0, 6.3); ctx.fill();
+    }
+    /* 腮红 */
+    var blushX = side ? [hx + dx * 6.6 * u] : [hx - 6.8 * u, hx + 6.8 * u];
+    ctx.fillStyle = 'rgba(255,142,142,.4)';
+    for (var bi = 0; bi < blushX.length; bi++) {
+      ctx.beginPath(); ctx.ellipse(blushX[bi], headCy + 2.6 * u, 1.9 * u, 1.25 * u, 0, 0, 6.3); ctx.fill();
+    }
+    /* 张嘴笑 */
+    ctx.beginPath();
+    ctx.ellipse(mzx, mzy + 1.0 * u, 2.35 * u, 1.95 * u, 0, 0, 6.3);
+    ctx.fillStyle = DRG.mouth;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(mzx, mzy + 2.3 * u, 1.6 * u, 1.0 * u, 0, 0, 6.3);
+    ctx.fillStyle = DRG.tongue;
+    ctx.fill();
+    /* 微笑唇线 */
+    ctx.beginPath();
+    ctx.moveTo(mzx - 3.1 * u, mzy - 1.2 * u);
+    ctx.quadraticCurveTo(mzx, mzy + 1.4 * u, mzx + 3.1 * u, mzy - 1.2 * u);
+    ctx.strokeStyle = 'rgba(120,40,40,.4)';
+    ctx.lineWidth = Math.max(0.7, 0.85 * u);
+    ctx.stroke();
+  } else {
+    /* 背身：后脑也有一缕鬃毛 */
+    var bhg = ctx.createLinearGradient(0, headCy - headR, 0, headCy + headR);
+    bhg.addColorStop(0, DRG.goldL);
+    bhg.addColorStop(1, DRG.goldD);
+    ctx.fillStyle = bhg;
+    rrectPath(hx - 2.5 * u, headCy - headR * 0.92, 5.0 * u, headR * 1.5, 2.5 * u);
+    ctx.fill();
+  }
+
+  /* ---- 头顶金色卷毛（先画，龙角压在它前面） ---- */
+  var cx0 = hx - 0.2 * u, cy0 = headCy - headR - 2.5 * u;
+  var cg3 = ctx.createLinearGradient(cx0 - 3.6 * u, cy0 - 3.2 * u, cx0 + 3.8 * u, cy0 + 3.6 * u);
+  cg3.addColorStop(0, DRG.goldL);
+  cg3.addColorStop(0.55, DRG.gold);
+  cg3.addColorStop(1, DRG.goldD);
+  ctx.beginPath();
+  ctx.moveTo(cx0 - 4.0 * u, cy0 + 3.0 * u);
+  ctx.quadraticCurveTo(cx0 - 4.9 * u, cy0 - 2.0 * u, cx0 - 0.5 * u, cy0 - 3.3 * u);
+  ctx.quadraticCurveTo(cx0 + 4.6 * u, cy0 - 4.1 * u, cx0 + 4.1 * u, cy0 + 1.0 * u);
+  ctx.quadraticCurveTo(cx0 + 3.6 * u, cy0 + 3.7 * u, cx0 - 4.0 * u, cy0 + 3.0 * u);
+  ctx.closePath();
+  ctx.fillStyle = cg3;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(176,118,0,.45)'; ctx.lineWidth = lw; ctx.stroke();
+  /* 卷毛内的高光螺旋 */
+  ctx.beginPath();
+  ctx.moveTo(cx0 - 1.9 * u, cy0 + 1.4 * u);
+  ctx.quadraticCurveTo(cx0 - 2.2 * u, cy0 - 0.9 * u, cx0 + 0.4 * u, cy0 - 1.0 * u);
+  ctx.strokeStyle = 'rgba(255,255,255,.62)';
+  ctx.lineWidth = Math.max(0.8, 1.0 * u);
+  ctx.stroke();
+
+  /* ---- 龙角（金色分叉，位于卷毛两侧） ---- */
+  var antList = side ? [-dx] : [-1, 1];
+  for (var ai = 0; ai < antList.length; ai++) {
+    var asg = antList[ai];
+    var ax0 = hx + asg * 4.6 * u, ay0 = headCy - headR * 0.62;
+    ctx.strokeStyle = DRG.goldL;
+    ctx.lineWidth = Math.max(1.3, 2.1 * u);
+    ctx.beginPath();
+    ctx.moveTo(ax0, ay0);
+    ctx.quadraticCurveTo(ax0 + asg * 2.3 * u, ay0 - 4.0 * u, ax0 + asg * 1.2 * u, ay0 - 7.4 * u);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(1.0, 1.5 * u);
+    ctx.beginPath();
+    ctx.moveTo(ax0 + asg * 1.7 * u, ay0 - 2.8 * u);
+    ctx.quadraticCurveTo(ax0 + asg * 4.4 * u, ay0 - 5.0 * u, ax0 + asg * 4.1 * u, ay0 - 7.2 * u);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(196,132,0,.5)';
+    ctx.lineWidth = Math.max(0.6, 0.7 * u);
+    ctx.beginPath();
+    ctx.moveTo(ax0 + asg * 0.5 * u, ay0 - 3.0 * u);
+    ctx.quadraticCurveTo(ax0 + asg * 2.4 * u, ay0 - 4.2 * u, ax0 + asg * 1.4 * u, ay0 - 7.0 * u);
+    ctx.stroke();
+  }
+
+  /* ---- 轮廓补光：让角色从暗场里“浮”出来 ---- */
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.strokeStyle = 'rgba(255,196,186,.5)';
+  ctx.lineWidth = Math.max(0.8, 1.0 * u);
+  ctx.beginPath();
+  ctx.ellipse(hx, headCy, headR - 1.2 * u, headR * 1.03 - 1.2 * u, 0, Math.PI * 0.7, Math.PI * 1.44);
+  ctx.stroke();
+  ctx.restore();
+
+  /* ---- 玩家脚下高亮 ---- */
+  ctx.strokeStyle = 'rgba(255,223,138,.5)';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 11.6 * u, 14.6 * u, 6.0 * u, 0, 0, 6.3);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawChar(e, isPlayer) {
-  if (isPlayer) { dbgDrawn.player++; } else { dbgDrawn.chars++; }
+  if (isPlayer) { dbgDrawn.player++; drawDragonChar(e); return; }
+  dbgDrawn.chars++;
   var x = worldToScreenX(e.x), y = worldToScreenY(e.y);
   var s = zoom;
   var moving = !!e.moving;
