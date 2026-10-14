@@ -896,7 +896,7 @@ var WALKABLE = { '.': 1, '=': 1, ',': 1, 'p': 1, 'g': 1, 'W': 1, 'd': 1, 's': 1 
 /* 默认阻挡的物件类型（可用物件上的 s:true/false 覆盖） */
 var SOLID_KINDS = {
   container: 1, building: 1, barrel: 1, crate: 1, rail: 1, boardobj: 1,
-  truck: 1, forklift: 1, reel: 1, pallet: 1, cranepost: 1
+  truck: 1, forklift: 1, reel: 1, pallet: 1, cranepost: 1, wall: 1, rack: 1
 };
 function tileWalkable(m, c, r) {
   if (r < 0 || r >= m.length || c < 0 || c >= m[0].length) { return false; }
@@ -933,6 +933,8 @@ var MAP2 = (function () {
   setRect(m, 21, 6, 4, 2, ',');         // 两座仓库之间的联络通道
   setRect(m, 2, 22, 7, 5, 'g');         // 绿化带
   setRect(m, 33, 22, 6, 5, 'g');
+  setRect(m, 6, 8, 14, 6, 'W');         // A 区仓库室内地面
+  setRect(m, 26, 8, 9, 6, 'W');         // B 区仓库室内地面
   return m;
 })();
 
@@ -1165,16 +1167,38 @@ var LEVEL1 = {
 var LEVEL2 = {
   idx: 2, name: '线索调查', hud: '第二关 · 线索调查', code: 'LEVEL 02',
   desc: '根据巡查记录，你来到仓储区域协助整理资料。这里堆放着不同批次的货物，你要找出三份关键记录，弄清货物合规核查到底在哪里出了岔子。',
-  hint: '仓库之间的通道是相通的，绕着走一圈就能找到全部记录。',
+  hint: '两座仓库都可以从南侧的门走进去，记录就在室内。',
   map: MAP2,
   spawn: { c: 20, r: 24 },
   sky: 'day',
   ambient: { dark: 0.10, warm: 'rgba(255,255,255,0.04)' },
   required: 5,
   obstacles: [
-    /* ---- 仓库建筑 ---- */
-    { x: 5, y: 7, w: 16, h: 8, k: 'building', label: 'A 区仓库' },
-    { x: 25, y: 7, w: 11, h: 8, k: 'building', label: 'B 区仓库' },
+    /* ---- A 区仓库（可进入：三面外墙，南侧 12-13 号为出入口） ---- */
+    { x: 5, y: 7, w: 16, h: 1, k: 'wall', label: 'A 区仓库' },
+    { x: 5, y: 8, w: 1, h: 6, k: 'wall' },
+    { x: 20, y: 8, w: 1, h: 6, k: 'wall' },
+    { x: 5, y: 14, w: 7, h: 1, k: 'wall' },
+    { x: 14, y: 14, w: 7, h: 1, k: 'wall' },
+    /* ---- A 区仓库室内设备 ---- */
+    { x: 7, y: 9, w: 4, h: 1, k: 'rack' },
+    { x: 15, y: 9, w: 4, h: 1, k: 'rack' },
+    { x: 7, y: 12, w: 3, h: 1, k: 'pallet' },
+    { x: 15, y: 12, w: 3, h: 1, k: 'pallet' },
+    { x: 18, y: 12, w: 1, h: 1, k: 'crate' },
+    { x: 12, y: 10, w: 1, h: 1, k: 'lamp' },
+    /* ---- B 区仓库（可进入：三面外墙，南侧 29-31 号为出入口） ---- */
+    { x: 25, y: 7, w: 11, h: 1, k: 'wall', label: 'B 区仓库' },
+    { x: 25, y: 8, w: 1, h: 6, k: 'wall' },
+    { x: 35, y: 8, w: 1, h: 6, k: 'wall' },
+    { x: 25, y: 14, w: 4, h: 1, k: 'wall' },
+    { x: 32, y: 14, w: 4, h: 1, k: 'wall' },
+    /* ---- B 区仓库室内设备 ---- */
+    { x: 27, y: 9, w: 3, h: 1, k: 'rack' },
+    { x: 32, y: 9, w: 2, h: 1, k: 'rack' },
+    { x: 27, y: 12, w: 3, h: 1, k: 'pallet' },
+    { x: 32, y: 12, w: 2, h: 1, k: 'pallet' },
+    { x: 31, y: 10, w: 1, h: 1, k: 'lamp' },
     /* ---- 北侧货场：成排集装箱 ---- */
     { x: 5, y: 2, w: 3, h: 2, k: 'container', c: 'red' },
     { x: 9, y: 2, w: 2, h: 2, k: 'container', c: 'blue' },
@@ -1230,7 +1254,7 @@ var LEVEL2 = {
     { x: 36, y: 19, w: 3, h: 2, k: 'building', label: '门卫室' },
     /* ---- 宣传横幅 ---- */
     { x: 6, y: 21, w: 10, h: 1, k: 'banner' },
-    /* ---- 路灯 ---- */
+/* ---- 路灯 ---- */
     { x: 2, y: 9, w: 1, h: 1, k: 'lamp' },
     { x: 23, y: 6, w: 1, h: 1, k: 'lamp' },
     { x: 37, y: 9, w: 1, h: 1, k: 'lamp' },
@@ -1260,17 +1284,17 @@ var LEVEL2 = {
   ],
   ship: null,
   items: [
-    { id: 'r1', kind: 'clue', c: 3, r: 3, req: true, name: '入库登记单', mark: '记录一',
+    { id: 'r1', kind: 'clue', c: 9, r: 11, req: true, name: '入库登记单', mark: '记录一',
       title: '记录一 · 入库登记单',
       by: '货物记录', role: '仓储资料', av: '单',
       lines: [
-        '你在一只散放的资料夹里找到一张入库登记单。',
+        '你走进 A 区仓库，在货架旁的值班台上找到一张入库登记单。',
         '单据上的货物名称写得很笼统，只写了"杂货一批"，规格、数量、来源都留了空。',
         '合规的入库记录应当逐项清楚，含糊的表述会让后续的核查无从下手。',
         '你按原样拍下单据，没有在上面补写任何内容。'
       ],
       tip: '记录含糊是核查的隐患，如实留存是关键。' },
-    { id: 'r2', kind: 'clue', c: 36, r: 4, req: true, name: '标签缺失清单', mark: '记录二',
+    { id: 'r2', kind: 'clue', c: 30, r: 11, req: true, name: '标签缺失清单', mark: '记录二',
       title: '记录二 · 标签缺失货物清单',
       by: '货物记录', role: '仓储资料', av: '单',
       lines: [
@@ -1328,11 +1352,11 @@ var LEVEL2 = {
         '你把内容拍下来，记进自己的宣传笔记。'
       ],
       tip: '如实反映，注意安全。' },
-    { id: 'd2', kind: 'teach', c: 21, r: 13, req: false, name: '锁扣松开的货箱', mark: '查看',
+    { id: 'd2', kind: 'teach', c: 17, r: 11, req: false, name: '锁扣松开的货箱', mark: '查看',
       title: '锁扣松开的货箱',
-      by: '货箱', role: '仓储区', av: '箱',
+      by: '货箱', role: 'A 区仓库', av: '箱',
       lines: [
-        '你注意到 B 区仓库墙边有一只货箱，金属锁扣是松开的，箱盖微微翘起。',
+        '你注意到 A 区仓库货架旁有一只货箱，金属锁扣是松开的，箱盖微微翘起。',
         '只要轻轻一掀，就能看到里面装的是什么。',
         '但你把手收了回来：擅自开启会改变现场状态，箱内物品也可能存在安全风险。',
         '你记下货箱位置，通知仓储管理员按规定处理。'
@@ -1367,6 +1391,9 @@ var LEVEL3 = {
     /* ---- 查验岗亭 ---- */
     { x: 4, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
     { x: 33, y: 12, w: 3, h: 2, k: 'building', label: '岗亭' },
+    /* ---- 出口道闸（查验完成后抬杆放行） ---- */
+    { x: 16, y: 9, w: 3, h: 1, k: 'boom' },
+    { x: 21, y: 9, w: 3, h: 1, k: 'boom' },
     /* ---- 查验通道隔离栏（留出 19-20 / 24 号通行口） ---- */
     { x: 15, y: 10, w: 4, h: 1, k: 'rail' },
     { x: 21, y: 10, w: 3, h: 1, k: 'rail' },
@@ -1596,6 +1623,8 @@ var G = {
   dialogOpen: false,
   busy: false,
   shake: 0,
+  boomT: 0,          // 道闸抬杆进度 0=落下 1=抬起
+  boomTarget: 0,
   t: 0
 };
 
@@ -1835,15 +1864,28 @@ function drawFence(c, r, sx, sy, s) {
   ctx.fillRect(sx + s / 2 - 2 * k, sy + s / 2 - 2 * k, 4 * k, 4 * k);
 }
 
-/* ---- 室内地面 ---- */
+/* ---- 室内地面（仓库地坪） ---- */
 function drawWare(c, r, sx, sy, s) {
   var k = s / TILE;
   var v = ((c * 4 + r * 6) % 9) / 9;
-  ctx.fillStyle = 'rgb(' + Math.round(40 + v * 8) + ',' + Math.round(48 + v * 8) + ',' + Math.round(66 + v * 9) + ')';
+  ctx.fillStyle = 'rgb(' + Math.round(58 + v * 10) + ',' + Math.round(66 + v * 10) + ',' + Math.round(84 + v * 11) + ')';
   ctx.fillRect(sx, sy, s + 1, s + 1);
-  ctx.strokeStyle = 'rgba(10,16,32,.5)';
+  /* 大块伸缩缝 */
+  ctx.strokeStyle = 'rgba(18,26,46,.55)';
+  ctx.lineWidth = Math.max(1, 1.6 * k);
+  ctx.beginPath();
+  if (c % 4 === 0) { ctx.moveTo(sx + 0.5, sy); ctx.lineTo(sx + 0.5, sy + s); }
+  if (r % 4 === 0) { ctx.moveTo(sx, sy + 0.5); ctx.lineTo(sx + s, sy + 0.5); }
+  ctx.stroke();
+  /* 细格 */
+  ctx.strokeStyle = 'rgba(140,170,215,.13)';
   ctx.lineWidth = Math.max(1, k);
   ctx.strokeRect(sx + 0.5, sy + 0.5, s, s);
+  /* 室内通道边线 */
+  if ((c + 2) % 8 === 0) {
+    ctx.fillStyle = 'rgba(255,223,138,.20)';
+    ctx.fillRect(sx + s * 0.46, sy, s * 0.08, s);
+  }
 }
 
 var TILE_DRAW = { '~': drawWater, '=': drawQuay, '.': drawStone, ',': drawRoad, 'p': drawPlaza, 'g': drawGrass, 'F': drawFence, 'W': drawWare };
@@ -2467,6 +2509,161 @@ function drawSign(o) {
   ctx.fillRect(cx - 9 * s, cy - 23.4 * s, 12 * s, 2 * s);
   ctx.restore();
 }
+
+    /* ---- 仓库墙体（可进入建筑的外墙） ---- */
+function drawWall(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  /* 落在地面上的阴影 */
+  ctx.fillStyle = 'rgba(0,0,0,.44)';
+  ctx.fillRect(x + 3 * s, y + 4 * s, w, h);
+  /* 墙体 */
+  var g = ctx.createLinearGradient(x, y, x, y + h);
+  g.addColorStop(0, '#5c7fb8');
+  g.addColorStop(0.32, '#33507f');
+  g.addColorStop(1, '#1b2c4c');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, h);
+  /* 顶面高光 */
+  ctx.fillStyle = 'rgba(175,210,255,.45)';
+  ctx.fillRect(x, y, w, Math.min(h, 4 * s));
+  /* 墙缝 */
+  ctx.strokeStyle = 'rgba(12,22,44,.55)';
+  ctx.lineWidth = Math.max(1, 1.2 * s);
+  if (o.w > o.h) {
+    for (var i = 1; i < o.w; i++) {
+      ctx.beginPath();
+      ctx.moveTo(x + i * TILE * s, y);
+      ctx.lineTo(x + i * TILE * s, y + h);
+      ctx.stroke();
+    }
+  } else {
+    for (var j = 1; j < o.h; j++) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + j * TILE * s);
+      ctx.lineTo(x + w, y + j * TILE * s);
+      ctx.stroke();
+    }
+  }
+  ctx.strokeStyle = 'rgba(150,195,255,.4)';
+  ctx.lineWidth = 1.6 * s;
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  /* 门头标识 */
+  if (o.label) {
+    ctx.font = 'bold ' + Math.round(12 * zoom) + 'px ' + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = 'center';
+    var tw = ctx.measureText(o.label).width + 16 * zoom;
+    ctx.fillStyle = 'rgba(6,16,36,.8)';
+    ctx.fillRect(x + w / 2 - tw / 2, y + h / 2 - 11 * zoom, tw, 22 * zoom);
+    ctx.strokeStyle = 'rgba(240,192,64,.7)';
+    ctx.lineWidth = 1.4 * zoom;
+    ctx.strokeRect(x + w / 2 - tw / 2, y + h / 2 - 11 * zoom, tw, 22 * zoom);
+    ctx.fillStyle = 'rgba(255,223,138,.96)';
+    ctx.fillText(o.label, x + w / 2, y + h / 2 + 4.5 * zoom);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+/* ---- 仓库货架 ---- */
+function drawRack(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.4)';
+  ctx.fillRect(x + 4 * s, y + 5 * s, w, h);
+  var g = ctx.createLinearGradient(x, y, x, y + h);
+  g.addColorStop(0, '#5f7396');
+  g.addColorStop(0.4, '#3d5175');
+  g.addColorStop(1, '#222f4a');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, h);
+  /* 货位分隔 */
+  ctx.strokeStyle = 'rgba(180,210,255,.3)';
+  ctx.lineWidth = 1.4 * s;
+  var n = o.w;
+  for (var i = 1; i < n; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x + i * (w / n), y + 2 * s);
+    ctx.lineTo(x + i * (w / n), y + h - 2 * s);
+    ctx.stroke();
+  }
+  /* 货位上的货箱 */
+  var cols = ['#c9931f', '#2f8a55', '#b03a30', '#2b62bd'];
+  for (var j = 0; j < n; j++) {
+    ctx.fillStyle = cols[(o.x + j) % 4];
+    ctx.fillRect(x + j * (w / n) + 3 * s, y + 3.4 * s, w / n - 6 * s, h * 0.42);
+    ctx.fillStyle = 'rgba(255,255,255,.16)';
+    ctx.fillRect(x + j * (w / n) + 3 * s, y + 3.4 * s, w / n - 6 * s, 2.4 * s);
+  }
+  ctx.strokeStyle = 'rgba(200,225,255,.5)';
+  ctx.lineWidth = 1.8 * s;
+  ctx.strokeRect(x + 1 * s, y + 1 * s, w - 2 * s, h - 2 * s);
+  ctx.restore();
+}
+
+/* ---- 道闸（抬杆） ---- */
+function drawBoom(o) {
+  var x = worldToScreenX(o.x * TILE), y = worldToScreenY(o.y * TILE);
+  var w = o.w * TILE * zoom, h = o.h * TILE * zoom;
+  var s = zoom;
+  var t = clamp(G.boomT || 0, 0, 1);
+  var baseW = 13 * s, armL = w;
+  var pivotX = x + baseW * 0.5, pivotY = y + h * 0.32;
+  ctx.save();
+  /* 杆臂（绕底座顶部旋转，抬起约 78°） */
+  ctx.translate(pivotX, pivotY);
+  ctx.rotate(-t * Math.PI * 0.435);
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.fillRect(0, 1.6 * s, armL, 5.6 * s);
+  var seg = 6;
+  for (var i = 0; i < seg; i++) {
+    ctx.fillStyle = (i % 2 === 0) ? '#e8eefc' : '#d93025';
+    ctx.fillRect(i * (armL / seg), 0, armL / seg + 0.5, 4.6 * s);
+  }
+  ctx.strokeStyle = 'rgba(10,20,40,.5)';
+  ctx.lineWidth = 1 * s;
+  ctx.strokeRect(0, 0, armL, 4.6 * s);
+  /* 杆端反光片 */
+  ctx.fillStyle = 'rgba(255,223,138,.9)';
+  ctx.fillRect(armL - 5 * s, 0, 3.4 * s, 4.6 * s);
+  ctx.restore();
+  /* 底座 */
+  ctx.fillStyle = 'rgba(0,0,0,.42)';
+  ctx.fillRect(pivotX - baseW * 0.6 + 3 * s, y + h * 0.18 + 4 * s, baseW * 1.2, h * 1.0);
+  var bg = ctx.createLinearGradient(x, 0, x + baseW, 0);
+  bg.addColorStop(0, '#1a2a46');
+  bg.addColorStop(0.4, '#3f5c8f');
+  bg.addColorStop(1, '#1a2a46');
+  ctx.fillStyle = bg;
+  ctx.fillRect(pivotX - baseW * 0.5, y - h * 0.36, baseW, h * 1.5);
+  /* 机身黄黑警示 */
+  ctx.fillStyle = 'rgba(240,192,64,.85)';
+  ctx.fillRect(pivotX - baseW * 0.5, y + h * 0.42, baseW, 3.2 * s);
+  ctx.fillStyle = 'rgba(20,30,50,.85)';
+  for (var q = 0; q < 3; q++) {
+    ctx.fillRect(pivotX - baseW * 0.5 + q * (baseW / 3) + 1.4 * s, y + h * 0.42, baseW / 6, 3.2 * s);
+  }
+  /* 指示灯 */
+  var lit = t > 0.5;
+  var lx = pivotX, ly = y - h * 0.3;
+  var lg = ctx.createRadialGradient(lx, ly, 0.5, lx, ly, 16 * s);
+  lg.addColorStop(0, lit ? 'rgba(120,255,190,.85)' : 'rgba(255,120,110,.85)');
+  lg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = lg;
+  ctx.beginPath(); ctx.arc(lx, ly, 16 * s, 0, 6.3); ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = lit ? '#3fd68f' : '#d93025';
+  ctx.beginPath(); ctx.arc(lx, ly, 3.4 * s, 0, 6.3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.beginPath(); ctx.arc(lx - 0.9 * s, ly - 0.9 * s, 1.1 * s, 0, 6.3); ctx.fill();
+  ctx.restore();
+}
+
 
 /* ---- 路灯 ---- */
 function lampScreenPos(o) { return { x: worldToScreenX(tx(o.x)), y: worldToScreenY(ty(o.y)) }; }
@@ -3104,6 +3301,9 @@ function drawObstacle(o) {
     case 'weighbridge': drawWeighbridge(o); break;
     case 'banner': drawBanner(o); break;
     case 'sign': drawSign(o); break;
+    case 'wall': drawWall(o); break;
+    case 'rack': drawRack(o); break;
+    case 'boom': drawBoom(o); break;
     default: break;
   }
 }
@@ -3428,25 +3628,36 @@ function beginFinale() {
   G.scene = 'cine';
   Sfx.play('level');
   cineRun([
-    { t: 0.7, fn: function () { camTarget = { x: tx(20) - vw / zoom / 2, y: ty(13) - vh / zoom / 2 }; } },
-    { t: 1.1 },
-    { fn: function () { Sfx.play('door'); } },
-    { t: 0.5 },
-    { fn: function () { for (var i = 0; i < 60; i++) { var a = Math.random() * 6.28, sp = 40 + Math.random() * 90; spawnParticle('spark', tx(20), ty(11), { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, life: 1.0 + Math.random() * 0.8, r: 3, col: '#ffdf8a' }); } } },
+    /* 镜头推向国门门洞与出口道闸 */
+    { t: 1.0, fn: function () { camTarget = { x: tx(20) - vw / zoom / 2, y: ty(9) - vh / zoom / 2 }; } },
+    { t: 0.9 },
+    /* 查验完成，抬杆放行 */
+    { fn: function () { Sfx.play('door'); G.boomTarget = 1; } },
+    { t: 0.45 },
+    { fn: function () {
+        for (var i = 0; i < 60; i++) {
+          var a = Math.random() * 6.28, sp = 40 + Math.random() * 90;
+          spawnParticle('spark', tx(19), ty(9), {
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40,
+            life: 1.0 + Math.random() * 0.8, r: 3, col: (i % 3 === 0) ? '#ffdf8a' : '#8fe6b6'
+          });
+        }
+      } },
     { t: 1.3 },
     { fn: function () {
         cine.blocked = true;
         startDialog([
           '陈姐：这几天你整理的线索，我们都收到了。',
           '陈姐：三条现场线索、三份仓储记录，全部按流程移交处理。',
+          '陈姐：你看，道闸抬杆了。这一下不只是放行，是货物合规通行背后的那份放心。',
           '陈姐：记住今天的事——发现、记录、报告。判断和处理，交给有权部门。',
           '你：明白。反走私不是一个人的事，是大家的事。'
         ], { by: '海关工作人员 陈姐', role: '国门查验区', av: '陈' }, function () {
           cine.blocked = false; cineNext();
         });
       } },
-    { fn: function () { toastUp('最终任务完成'); } },
-    { t: 1.0 },
+    { fn: function () { toastUp('最终任务完成'); toastUp('国门已放行'); } },
+    { t: 1.1 },
     { fn: function () { endGame(); } }
   ]);
 }
@@ -3475,6 +3686,8 @@ function buildLevel(idx) {
   G.particles = [];
   G.levelTime = 0;
   G.shake = 0;
+  G.boomT = 0;
+  G.boomTarget = 0;
   camTarget = null;
 
   /* 生成碰撞矩形 */
@@ -3611,6 +3824,7 @@ function computeResult() {
 
 function endGame() {
   cineEnd();
+  G.boomT = G.boomTarget;   // 结算前让道闸动画收尾到最终状态
   G.scene = 'ending';
   Sfx.play('finish');
   var r = computeResult();
@@ -3797,6 +4011,11 @@ function update(dt) {
   if (G.scene !== lastScene) { lastScene = G.scene; syncChrome(); }
   /* 菜单场景也持续更新粒子 */
   updateParticles(dt);
+  /* 道闸抬杆动画（过场中即使对话框打开也要继续播放） */
+  if (G.boomT !== G.boomTarget) {
+    G.boomT += (G.boomTarget - G.boomT) * Math.min(1, dt * 2.6);
+    if (Math.abs(G.boomTarget - G.boomT) < 0.004) { G.boomT = G.boomTarget; }
+  }
   if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 22); }
 
   if (G.scene === 'menu') { return; }
@@ -4117,7 +4336,7 @@ function init() {
         playerX: player.x, playerY: player.y,
         screenX: (player.x - cam.x) * zoom,
         screenY: (player.y - cam.y) * zoom,
-        items: G.items.length, obstacles: G.obstacles.length,
+        items: G.items.length, obstacles: G.obstacles.length, boomT: G.boomT, boomTarget: G.boomTarget,
         drawn: { ticks: dbgDrawn.ticks, listLen: dbgDrawn.listLen, player: dbgDrawn.player, marker: dbgDrawn.marker, npc: dbgDrawn.chars }
       };
     }
