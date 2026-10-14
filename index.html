@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#03081a">
-<meta name="description" content="《国门行动：反走私守护者》是一款原创 2D 俯视角探索游戏。扮演港口任务协助人员，在港口、仓储区与国门之间探索、收集线索、完成任务。全民反走私，你我齐参与。">
-<title>国门行动：反走私守护者 · 2D 探索版</title>
+<meta name="description" content="《国门行动：暗线追踪》是一款原创 2D 俯视角探索游戏。扮演港口任务协助人员，在港口、仓储区与国门之间探索、收集线索、完成任务。全民反走私，你我齐参与。">
+<title>国门行动：暗线追踪 · 2D 探索版</title>
 <style>
 /* ==========================================================
-   国门行动：反走私守护者 — 现代港口行动风格视觉系统
+   国门行动：暗线追踪 — 现代港口行动风格视觉系统
    配色：深海军蓝 / 钢灰 / 警示橙 / 任务蓝
    目录：变量 · 基础 · 舞台 · HUD · 侧栏与证据 · 触控 · 对话
         弹层 · 主菜单 · 简报 · 研判台 · 资源分配 · 处置方案
@@ -723,25 +723,6 @@ ul{margin:0;}
   font-size:14px;line-height:1.85;color:#ffe0c4;text-align:center;letter-spacing:.4px;
 }
 .end-note{margin-top:13px;font-size:11px;line-height:1.7;color:var(--ink-mute);text-align:center;}
-
-/* 行动复盘 · 结语（通关后的主题阐述与普法资料来源） */
-.end-prologue{
-  text-align:left;padding:14px 15px;border-radius:13px;margin:14px 0 2px;
-  background:linear-gradient(180deg,rgba(14,36,72,.92),rgba(6,16,34,.92));
-  border:1px solid var(--line);border-left:3px solid var(--orange-500);
-}
-.end-prologue .ep-title{font-size:14px;font-weight:800;letter-spacing:1.6px;color:#ffdf8a;margin-bottom:7px;}
-.end-prologue .ep-lead{
-  font-size:13px;font-weight:700;color:var(--blue-300);line-height:1.8;
-  letter-spacing:.6px;margin-bottom:10px;
-}
-.end-prologue p{font-size:12.5px;line-height:1.9;color:#bdd2f2;margin:0 0 9px;}
-.end-prologue p:last-child{margin-bottom:0;}
-.end-prologue .ep-strong{color:#ffe0c4;font-weight:700;}
-.end-prologue .ep-src{
-  margin-top:11px;padding-top:9px;border-top:1px dashed rgba(255,255,255,.14);
-  font-size:11px;line-height:1.75;color:var(--ink-mute);
-}
 .ov-actions{display:flex;flex-direction:column;gap:10px;margin-top:15px;}
 .ov-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
@@ -918,7 +899,7 @@ ul{margin:0;}
           </svg>
         </div>
         <h1 class="mtitle">国门行动</h1>
-        <div class="msub">反走私守护者</div>
+        <div class="msub">暗线追踪</div>
         <div class="mslogan">全民反走私 · 你我齐参与</div>
         <div class="mtag">2D 俯视角探索 · 结构化证据研判 · 规范处置决策</div>
       </div>
@@ -995,7 +976,6 @@ ul{margin:0;}
       <div class="stat-grid" id="endStats"></div>
       <div class="score-list" id="endScores"></div>
       <div class="gain-list" id="endGains"></div>
-      <div class="end-prologue" id="endPrologue"></div>
       <div class="end-slogan" id="endSlogan">—</div>
       <div class="ov-actions">
         <button class="btn btn-primary btn-lg" id="btnEndRetry" type="button">再 次 巡 查</button>
@@ -1054,7 +1034,7 @@ ul{margin:0;}
     <div class="ov-card">
       <div class="ov-title">制作说明</div>
       <div class="brief-list" style="margin-bottom:0;">
-        <li><i>作</i><span><b>国门行动：反走私守护者</b>（2D 探索版）<br>宣传主题：全民反走私，你我齐参与。<br>玩法：俯视角探索 + 线索收集 + 任务推进。</span></li>
+        <li><i>作</i><span><b>国门行动：暗线追踪</b>（2D 探索版）<br>宣传主题：全民反走私，你我齐参与。<br>玩法：俯视角探索 + 线索收集 + 任务推进。</span></li>
         <li><i>原</i><span>全部文字脚本、地图、角色与美术均由 HTML5 Canvas 实时绘制与代码生成，未使用任何第三方图片、音频或游戏素材。音效由 Web Audio API 实时合成。</span></li>
         <li><i>技</i><span>原生 HTML5 + CSS3 + JavaScript 单文件实现，含持续游戏循环、瓦片地图、AABB 碰撞、摄像机跟随、任务状态机。无依赖、无需联网、无需服务器。</span></li>
         <li><i>隐</i><span>不要求登录，不收集姓名、身份证号、手机号等任何个人信息。仅在本地保存通关进度、最好评级与音效开关。</span></li>
@@ -1149,7 +1129,7 @@ ul{margin:0;}
 
 <script>
 /* ============================================================
-   国门行动：反走私守护者 — 2D 俯视角探索游戏
+   国门行动：暗线追踪 — 2D 俯视角探索游戏
    模块：
      1 工具  2 存档  3 音效  4 地图与关卡数据  5 输入
      6 世界与玩家  7 渲染  8 对话  9 任务系统  10 过场
@@ -5168,19 +5148,6 @@ function buildEndReview(r) {
   return out;
 }
 
-/* 通关后的「行动复盘」结语：主题阐述 + 普法资料来源 */
-function buildEndPrologue() {
-  return '<div class="ep-title">《国门行动：暗线追踪》</div>' +
-    '<div class="ep-lead">以证据揭开疑云，以行动守护国门。</div>' +
-    '<p>走私不仅扰乱正常的经济秩序，也可能危害国家安全、市场公平、生态环境与人民群众的生命健康。' +
-    '反走私不仅是有关部门的职责，更需要社会公众共同参与。</p>' +
-    '<p>在《国门行动：暗线追踪》中，你将进入虚构的现代港口，化身国门安全协作人员，' +
-    '通过现场调查、线索搜集、证据比对与策略研判，逐步查明事件真相，作出审慎、合规的处置决定。</p>' +
-    '<p>面对疑点，你需要保持冷静；面对证据，你需要认真核实；面对选择，你需要坚持法治原则。</p>' +
-    '<p class="ep-strong">守护国门安全，从识别风险、尊重法律、拒绝走私、理性参与开始。</p>' +
-    '<p class="ep-src">资料参考：司法部关于反走私宣传教育的法规资料，以及检察机关、海警和地方政府发布的普法报道。</p>';
-}
-
 function endGame() {
   cineEnd();
   G.boomT = G.boomTarget;   // 结算前让道闸动画收尾到最终状态
@@ -5204,7 +5171,6 @@ function endGame() {
   $('#endScores').innerHTML = buildEndScores(r);
   animateScoreBars($('#endScores'));
   $('#endGains').innerHTML = buildEndReview(r);
-  $('#endPrologue').innerHTML = buildEndPrologue();
   $('#endSlogan').textContent = '“' + r.slogan + '”';
   save.best = Math.max(save.best || 0, r.score);
   save.rank = r.letter;
@@ -5235,7 +5201,7 @@ function badgeSVG(stars, letter) {
 var posterUrl = '';
 function posterText() {
   var r = computeResult();
-  return '我在《国门行动：反走私守护者》2D 探索版中完成了全部三个关卡，综合评分 ' + r.score +
+  return '我在《国门行动：暗线追踪》2D 探索版中完成了全部三个关卡，综合评分 ' + r.score +
          ' 分，评级「' + r.title + '」。\n证据入档 ' + countEvidence() + '/' + totalEvidence() + ' 条，完成任务目标 ' + G.gotRequired + ' 项，总用时 ' + fmtTime(G.elapsed) + '。\n' +
          '四维得分：证据完整性 ' + r.dims.ev + ' · 推理准确性 ' + r.dims.inf + ' · 处置规范性 ' + r.dims.co + ' · 资源管理 ' + r.dims.res + '。\n' +
          '全民反走私，你我齐参与。\n（本结果为科普互动游戏评价，不代表任何执法资格或官方荣誉）';
@@ -5277,7 +5243,7 @@ function drawPoster() {
   g.fillStyle = 'rgba(143,192,255,.95)'; g.font = 'bold 20px ' + FONT;
   g.fillText('反 走 私 主 题 2 D 探 索 游 戏', W / 2, 104);
   g.fillStyle = '#ffdf8a'; g.font = 'bold 46px ' + FONT; g.fillText('国门行动', W / 2, 168);
-  g.fillStyle = 'rgba(206,224,255,.95)'; g.font = '24px ' + FONT; g.fillText('反走私守护者', W / 2, 208);
+  g.fillStyle = 'rgba(206,224,255,.95)'; g.font = '24px ' + FONT; g.fillText('暗线追踪', W / 2, 208);
   g.fillStyle = 'rgba(255,223,138,.9)'; g.font = '20px ' + FONT; g.fillText('全民反走私 · 你我齐参与', W / 2, 248);
   /* 徽章 */
   g.beginPath(); g.arc(W / 2, 340, 74, 0, 6.283);
@@ -5339,7 +5305,7 @@ function savePoster() {
   try {
     var a = document.createElement('a');
     a.href = posterUrl;
-    a.download = '国门行动_2D探索版_结局卡片.png';
+    a.download = '国门行动_暗线追踪_结局卡片.png';
     a.style.display = 'none';
     document.body.appendChild(a); a.click();
     setTimeout(function () { if (a.parentNode) { a.parentNode.removeChild(a); } }, 100);
