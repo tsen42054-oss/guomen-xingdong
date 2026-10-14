@@ -432,6 +432,12 @@ ul{margin:0;}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
 }
 .btn-block{width:100%;}
+/* 强调按钮：用于「知识教育」这类普法入口，暖色与主行动蓝区分开 */
+.btn-accent{
+  background:linear-gradient(180deg,rgba(255,158,58,.32),rgba(120,52,10,.5));
+  border:1px solid rgba(255,152,62,.62);color:#ffdcaa;
+  box-shadow:0 10px 26px rgba(217,92,12,.2),inset 0 1px 0 rgba(255,255,255,.16);
+}
 .btn-lg{padding:16px;font-size:16.5px;letter-spacing:3px;border-radius:14px;}
 .btn:disabled{opacity:.45;cursor:default;}
 .btn-sm{padding:9px 12px;font-size:13px;letter-spacing:.6px;border-radius:10px;}
@@ -726,6 +732,33 @@ ul{margin:0;}
 .ov-actions{display:flex;flex-direction:column;gap:10px;margin-top:15px;}
 .ov-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
+/* ---------- 知识教育 ---------- */
+.edu-doc{
+  text-align:left;padding:14px 15px;border-radius:13px;margin-bottom:14px;
+  background:linear-gradient(180deg,rgba(14,36,72,.92),rgba(6,16,34,.92));
+  border:1px solid var(--line);border-left:3px solid var(--orange-500);
+}
+.edu-name{font-size:14.5px;font-weight:800;letter-spacing:1.6px;color:#ffdf8a;margin-bottom:7px;}
+.edu-lead{font-size:13px;font-weight:700;color:var(--blue-300);line-height:1.8;letter-spacing:.6px;margin-bottom:10px;}
+.edu-doc p{font-size:12.5px;line-height:1.9;color:#bdd2f2;margin:0 0 9px;}
+.edu-doc p:last-child{margin-bottom:0;}
+.edu-doc .edu-strong{color:#ffe0c4;font-weight:700;}
+.edu-qr-title{
+  font-size:12.5px;line-height:1.7;color:var(--ink-dim);text-align:center;margin-bottom:11px;
+}
+.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px;}
+.qr-item{
+  margin:0;padding:9px 9px 7px;border-radius:12px;text-align:center;
+  background:#fff;border:1px solid rgba(255,255,255,.5);
+  box-shadow:0 8px 20px rgba(0,0,0,.34);
+}
+.qr-item img{display:block;width:100%;height:auto;border-radius:6px;background:#fff;}
+.qr-item figcaption{font-size:11.5px;font-weight:700;color:#16305c;margin-top:7px;letter-spacing:.6px;}
+.edu-src{
+  font-size:11px;line-height:1.75;color:var(--ink-mute);text-align:left;
+  padding-top:10px;border-top:1px dashed rgba(255,255,255,.14);margin:0;
+}
+
 /* ---------- 暂停 ---------- */
 .pause-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
 .pause-keys{
@@ -909,12 +942,14 @@ ul{margin:0;}
         <span>最好评级 <b id="mRank">—</b></span>
       </div>
       <button class="btn btn-primary btn-lg" id="btnStart" type="button">开 始 巡 查</button>
+      <button class="btn btn-accent btn-lg" id="btnEdu" type="button">知 识 教 育</button>
       <div class="mgrid">
         <button class="btn btn-ghost" id="btnContinue" type="button">继续上次</button>
         <button class="btn btn-ghost" id="btnHelp" type="button">操作说明</button>
+        <button class="btn btn-ghost" id="btnBgm2" type="button">音乐：开</button>
         <button class="btn btn-ghost" id="btnSound2" type="button">音效：开</button>
-        <button class="btn btn-ghost" id="btnAbout" type="button">制作说明</button>
       </div>
+      <button class="btn btn-ghost" id="btnAbout" type="button">制作说明</button>
     </div>
   </div>
 
@@ -942,6 +977,7 @@ ul{margin:0;}
       <div class="pause-list">
         <button class="btn btn-primary btn-block" id="btnResume" type="button">继续游戏</button>
         <button class="btn btn-ghost btn-block" id="btnRestartLv" type="button">重玩本关</button>
+        <button class="btn btn-ghost btn-block" id="btnBgm3" type="button">音乐：开</button>
         <button class="btn btn-ghost btn-block" id="btnSound3" type="button">音效：开</button>
         <button class="btn btn-ghost btn-block" id="btnBackMenu" type="button">返回主菜单</button>
       </div>
@@ -1035,12 +1071,40 @@ ul{margin:0;}
       <div class="ov-title">制作说明</div>
       <div class="brief-list" style="margin-bottom:0;">
         <li><i>作</i><span><b>国门行动：暗线追踪</b>（2D 探索版）<br>宣传主题：全民反走私，你我齐参与。<br>玩法：俯视角探索 + 线索收集 + 任务推进。</span></li>
-        <li><i>原</i><span>全部文字脚本、地图、角色与美术均由 HTML5 Canvas 实时绘制与代码生成，未使用任何第三方图片、音频或游戏素材。音效由 Web Audio API 实时合成。</span></li>
-        <li><i>技</i><span>原生 HTML5 + CSS3 + JavaScript 单文件实现，含持续游戏循环、瓦片地图、AABB 碰撞、摄像机跟随、任务状态机。无依赖、无需联网、无需服务器。</span></li>
-        <li><i>隐</i><span>不要求登录，不收集姓名、身份证号、手机号等任何个人信息。仅在本地保存通关进度、最好评级与音效开关。</span></li>
+        <li><i>原</i><span>文字脚本、地图、角色与全部美术均由 HTML5 Canvas 实时绘制与代码生成；音效由 Web Audio API 实时合成。<b>背景音乐</b>与<b>「知识教育」中的两张公众号 / 微博二维码图片</b>为外部素材，随本页放在同一目录，不联网加载。</span></li>
+        <li><i>技</i><span>原生 HTML5 + CSS3 + JavaScript 实现，含持续游戏循环、瓦片地图、AABB 碰撞、摄像机跟随、任务状态机。无框架依赖，无需服务器，除背景音乐与二维码图片外无任何外部资源。</span></li>
+        <li><i>隐</i><span>不要求登录，不收集姓名、身份证号、手机号等任何个人信息。仅在本地保存通关进度、最好评级、音效与音乐开关。</span></li>
       </div>
       <p class="qnote" style="margin-top:14px;">所有情节、人物、单位均为虚构，不对应任何真实主体。作品不提供任何走私路线、规避监管方法或违禁品相关信息。</p>
       <div class="ov-actions"><button class="btn btn-primary btn-block" id="btnAboutClose" type="button">关闭</button></div>
+    </div>
+  </div>
+
+  <!-- ============ 知识教育 ============ -->
+  <div class="ov" id="edu">
+    <div class="ov-card">
+      <div class="ov-title">知识教育</div>
+      <div class="edu-doc">
+        <div class="edu-name">《国门行动：暗线追踪》</div>
+        <div class="edu-lead">以证据揭开疑云，以行动守护国门。</div>
+        <p>走私不仅扰乱正常的经济秩序，也可能危害国家安全、市场公平、生态环境与人民群众的生命健康。反走私不仅是有关部门的职责，更需要社会公众共同参与。</p>
+        <p>在《国门行动：暗线追踪》中，你将进入虚构的现代港口，化身国门安全协作人员，通过现场调查、线索搜集、证据比对与策略研判，逐步查明事件真相，作出审慎、合规的处置决定。</p>
+        <p>面对疑点，你需要保持冷静；面对证据，你需要认真核实；面对选择，你需要坚持法治原则。</p>
+        <p class="edu-strong">守护国门安全，从识别风险、尊重法律、拒绝走私、理性参与开始。</p>
+      </div>
+      <div class="edu-qr-title">扫码关注「中国反走私」，了解更多反走私知识</div>
+      <div class="qr-grid">
+        <figure class="qr-item">
+          <img src="wechat-qr.jpg" alt="中国反走私 微信公众号二维码">
+          <figcaption>微信公众号</figcaption>
+        </figure>
+        <figure class="qr-item">
+          <img src="weibo-qr.jpg" alt="中国反走私 微博二维码">
+          <figcaption>微博</figcaption>
+        </figure>
+      </div>
+      <p class="edu-src">资料参考：司法部关于反走私宣传教育的法规资料，以及检察机关、海警和地方政府发布的普法报道。二维码图片由「中国反走私」官方账号提供。</p>
+      <div class="ov-actions"><button class="btn btn-primary btn-block" id="btnEduClose" type="button">关 闭</button></div>
     </div>
   </div>
 
@@ -1125,6 +1189,8 @@ ul{margin:0;}
   <div class="scanline"></div>
   <div id="fade"></div>
   <div id="toast"></div>
+  <!-- 背景音乐：与 index.html 同目录，纯本地文件，不联网 -->
+  <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
 </div>
 
 <script>
@@ -1176,6 +1242,7 @@ var Store = (function () {
 
 var K_SAVE = 'gdk2_save';
 var K_SOUND = 'gdk2_sound';
+var K_BGM = 'gdk2_bgm';
 
 var save = { level: 0, rank: '', best: 0 };
 (function () {
@@ -1249,6 +1316,79 @@ var Sfx = (function () {
     toggle: function () { on = !on; Store.set(K_SOUND, on ? '1' : '0'); if (on) { ensure(); L.press(); } return on; },
     unlock: function () { ensure(); },
     play: function (n) { if (!on || !L[n]) { return; } L[n](); }
+  };
+})();
+
+/* ============================================================
+   3.5 背景音乐
+   ------------------------------------------------------------
+   浏览器规定「带声音的播放」必须由用户手势触发，因此这里只记录
+   播放偏好，真正开播要等第一次点击 / 按键（Bgm.unlock）。
+   音乐文件与页面同目录，纯本地加载。
+   ============================================================ */
+var Bgm = (function () {
+  var el = null, on = Store.get(K_BGM, '1') !== '0';
+  var unlocked = false, fadeTimer = null, stopTimer = null;
+  var VOL = 0.4;
+
+  function node() { if (!el) { el = document.getElementById('bgm'); } return el; }
+  function clearFade() { if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; } }
+  function fadeTo(target, done) {
+    var a = node(); if (!a) { return; }
+    clearFade();
+    var diff = target - a.volume;
+    if (Math.abs(diff) < 0.03) {
+      a.volume = target;
+      if (done) { done(); }
+      return;
+    }
+    var step = diff / 16;
+    fadeTimer = setInterval(function () {
+      var v = a.volume + step;
+      if ((step > 0 && v >= target) || (step < 0 && v <= target)) {
+        a.volume = target; clearFade();
+        if (done) { done(); }
+        return;
+      }
+      a.volume = Math.max(0, Math.min(1, v));
+    }, 32);
+  }
+  function start() {
+    var a = node();
+    if (!a || !on || !unlocked) { return; }
+    if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+    if (a.paused) {
+      try {
+        var p = a.play();
+        if (p && p['catch']) { p['catch'](function () {}); }
+      } catch (e) { return; }
+      a.volume = 0;
+    }
+    fadeTo(VOL);
+  }
+  function halt() {
+    var a = node(); if (!a) { return; }
+    if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+    fadeTo(0, function () {
+      stopTimer = setTimeout(function () {
+        stopTimer = null;
+        if (!on && a && !a.paused) { try { a.pause(); } catch (e) {} }
+      }, 60);
+    });
+  }
+  return {
+    isOn: function () { return on; },
+    /* 第一次用户手势时调用，此后才能正常播放 */
+    unlock: function () { unlocked = true; start(); },
+    isUnlocked: function () { return unlocked; },
+    toggle: function () {
+      on = !on;
+      Store.set(K_BGM, on ? '1' : '0');
+      if (on) { unlocked = true; start(); } else { halt(); }
+      return on;
+    },
+    suspend: function () { var a = node(); if (a && !a.paused) { try { a.pause(); } catch (e) {} } },
+    resume: function () { start(); }
   };
 })();
 
@@ -4797,7 +4937,7 @@ function tryInteract() {
 }
 /* 统一判断是否有全屏弹层处于打开状态（弹层打开时冻结世界，防止"看不见却在移动"） */
 function modalOpen() {
-  var ids = ['pause', 'analysis', 'resource', 'plan', 'clear', 'ending', 'help', 'about', 'posterOv'];
+  var ids = ['pause', 'analysis', 'resource', 'plan', 'clear', 'ending', 'help', 'about', 'edu', 'posterOv'];
   for (var i = 0; i < ids.length; i++) {
     var el = $('#' + ids[i]);
     if (el && el.classList.contains('show')) { return true; }
@@ -5461,6 +5601,31 @@ function syncSound() {
   $('#btnSound3').textContent = '音效：' + (on ? '开' : '关');
 }
 function toggleSound() { Sfx.toggle(); syncSound(); }
+function syncBgm() {
+  var on = Bgm.isOn();
+  var b2 = $('#btnBgm2'); if (b2) { b2.textContent = '音乐：' + (on ? '开' : '关'); }
+  var b3 = $('#btnBgm3'); if (b3) { b3.textContent = '音乐：' + (on ? '开' : '关'); }
+}
+function toggleBgm() { Bgm.toggle(); syncBgm(); }
+/* 背景音乐需用户手势才能开播：首次点击 / 按键后启动；切到后台自动暂停 */
+function bindBgmUnlock() {
+  var once = function () {
+    Bgm.unlock();
+    document.removeEventListener('pointerdown', once);
+    document.removeEventListener('mousedown', once);
+    document.removeEventListener('click', once);
+    document.removeEventListener('keydown', once);
+    document.removeEventListener('touchstart', once);
+  };
+  document.addEventListener('pointerdown', once);
+  document.addEventListener('mousedown', once);
+  document.addEventListener('click', once);
+  document.addEventListener('keydown', once);
+  document.addEventListener('touchstart', once);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { Bgm.suspend(); } else { Bgm.resume(); }
+  });
+}
 function onPauseKey() {
   if (G.scene === 'playing' || G.scene === 'cine') {
     if ($('#pause').classList.contains('show')) { resumeGame(); } else { pauseGame(); }
@@ -5495,7 +5660,7 @@ function resetRun() {
 }
 /* 重新开始 / 返回主菜单前，关闭所有弹层，避免遮挡 */
 function closeAllPanels() {
-  var ids = ['analysis', 'resource', 'plan', 'clear', 'posterOv', 'help', 'about', 'pause'];
+  var ids = ['analysis', 'resource', 'plan', 'clear', 'posterOv', 'help', 'about', 'edu', 'pause'];
   for (var i = 0; i < ids.length; i++) {
     var el = $('#' + ids[i]);
     if (el) { el.classList.remove('show'); }
@@ -5523,6 +5688,10 @@ function bindUI() {
   $('#btnSound2').addEventListener('click', toggleSound);
   $('#btnSound').addEventListener('click', toggleSound);
   $('#btnSound3').addEventListener('click', toggleSound);
+  $('#btnBgm2').addEventListener('click', toggleBgm);
+  $('#btnBgm3').addEventListener('click', toggleBgm);
+  $('#btnEdu').addEventListener('click', function () { $('#edu').classList.add('show'); Sfx.play('click'); });
+  $('#btnEduClose').addEventListener('click', function () { $('#edu').classList.remove('show'); });
 
   $('#btnBriefGo').addEventListener('click', function () { Sfx.play('press'); beginLevel(briefPendingIdx); });
 
@@ -6326,6 +6495,8 @@ function init() {
   bindUI();
   resize();
   syncSound();
+  syncBgm();
+  bindBgmUnlock();
   refreshMenuStats();
   G.scene = 'menu';
   lastScene = null;
@@ -6336,6 +6507,8 @@ function init() {
   window.GDK = {
     G: G, player: player, LEVELS: LEVELS,
     keys: keys, stick: stick,
+    bgm: Bgm,
+    bgmOn: function () { return Bgm.isOn(); },
     update: update, render: render,
     startLevel: function (i) { startNewRun(); beginLevel(clamp(i, 0, 2)); },
     interact: tryInteract,
