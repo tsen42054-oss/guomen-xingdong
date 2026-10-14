@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050d20">
+<meta name="description" content="《国门行动：反走私守护者》是一款原创反走私主题 H5 互动游戏，通过情景判断、线索研判与知识挑战，了解反走私常识，增强依法合规与主动举报意识。">
+<meta name="author" content="原创作品 · 全国大学生反走私创作大赛参评作品">
+<title>国门行动：反走私守护者 | 全民反走私，你我齐参与</title>
+<style>
+/* ============================================================
+   国门行动：反走私守护者  —  单文件 H5 游戏
+   结构：设计变量 / 基础重置 / 首页 / 游戏区 / HUD / 卡片与选项
+        / 弹层 / 结局 / 动效 / 响应式
+   ============================================================ */
+
+/* ---------- 设计变量 ---------- */
+:root{
+  --navy-900:#030814;
+  --navy-800:#050d20;
+  --navy-700:#0a1430;
+  --navy-600:#101f45;
+  --blue-500:#1b4bb8;
+  --blue-400:#2f6ae0;
+  --blue-300:#6fa6ff;
+  --gold-500:#d4a017;
+  --gold-400:#f0c040;
+  --gold-300:#ffdf8a;
+  --red-500:#d93025;
+  --red-400:#ff5a4d;
+  --green-400:#3fd68f;
+  --green-500:#18a058;
+  --ink:#e8efff;
+  --ink-dim:#9db2d8;
+  --line:rgba(120,170,255,.22);
+  --radius:18px;
+  --font:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+/* ---------- 基础重置 ---------- */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:var(--font);
+  background:#02060f;
+  color:var(--ink);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button{font-family:inherit;touch-action:manipulation;}
+p{margin:0;}
+h1,h2,h3{margin:0;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:rgba(110,160,255,.35);border-radius:99px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- 舞台容器 ---------- */
+#app{
+  position:relative;
+  width:100%;
+  max-width:620px;
+  height:100vh;
+  height:100dvh;
+  margin:0 auto;
+  overflow:hidden;
+  background:var(--navy-800);
+  isolation:isolate;
+}
+@media (min-width:700px){
+  body{background:radial-gradient(ellipse at 50% -10%,#0b1f45 0%,#03070f 65%);}
+  #app{
+    border-left:1px solid rgba(90,150,255,.16);
+    border-right:1px solid rgba(90,150,255,.16);
+    box-shadow:0 0 90px rgba(25,70,160,.35);
+  }
+}
+
+/* ---------- 屏幕切换 ---------- */
+.screen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(18px) scale(.99);
+  transition:opacity .42s ease,transform .42s cubic-bezier(.2,.8,.25,1),visibility .42s;
+}
+.screen.active{opacity:1;visibility:visible;transform:none;}
+
+/* ============================================================
+   首页
+   ============================================================ */
+#screen-home{justify-content:flex-end;}
+.home-scene{position:absolute;inset:0;overflow:hidden;}
+.home-scene svg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:auto;height:100%;min-width:100%;}
+.home-veil{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 50% 78%,rgba(6,16,38,.15) 0%,rgba(4,10,24,.72) 58%,rgba(2,6,15,.94) 100%),
+    linear-gradient(180deg,rgba(3,8,20,.72) 0%,rgba(3,8,20,0) 34%,rgba(3,8,20,.55) 66%,rgba(3,8,20,.96) 100%);
+}
+.spark{
+  position:absolute;width:3px;height:3px;border-radius:50%;
+  background:rgba(255,223,138,.9);
+  box-shadow:0 0 8px rgba(255,223,138,.9);
+  animation:sparkFloat linear infinite;
+  opacity:0;
+}
+@keyframes sparkFloat{
+  0%{opacity:0;transform:translateY(0) scale(.6);}
+  20%{opacity:.9;}
+  80%{opacity:.7;}
+  100%{opacity:0;transform:translateY(-120px) scale(1.1);}
+}
+/* 首页场景动效 */
+.wave-far{animation:waveShift 13s ease-in-out infinite alternate;}
+.wave-1{animation:waveShift 11s ease-in-out infinite alternate;}
+.wave-2{animation:waveShift 9s ease-in-out infinite alternate-reverse;}
+.wave-3{animation:waveShift 7.5s ease-in-out infinite alternate;}
+@keyframes waveShift{from{transform:translateX(0);}to{transform:translateX(70px);}}
+.stars circle{animation:twinkle 4.2s ease-in-out infinite;}
+.stars circle:nth-child(2n){animation-duration:3.4s;animation-delay:.6s;}
+.stars circle:nth-child(3n){animation-duration:5.1s;animation-delay:1.3s;}
+@keyframes twinkle{0%,100%{opacity:.28;}50%{opacity:1;}}
+.gate .scan{animation:scanMove 3.6s ease-in-out infinite;}
+@keyframes scanMove{0%,100%{transform:translateY(-14px);opacity:.35;}50%{transform:translateY(14px);opacity:1;}}
+.home-content{
+  position:relative;
+  z-index:2;
+  padding:0 22px calc(26px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  max-width:520px;
+  width:100%;
+  margin:0 auto;
+}
+.brand{text-align:center;margin-top:auto;padding-top:min(16vh,120px);}
+.brand-emblem{
+  width:74px;height:74px;margin:0 auto 14px;
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(240,192,64,.22),rgba(31,75,184,.28));
+  border:1px solid rgba(240,192,64,.5);
+  box-shadow:0 0 34px rgba(240,192,64,.28),inset 0 1px 0 rgba(255,255,255,.18);
+  animation:emblemPulse 3.4s ease-in-out infinite;
+}
+@keyframes emblemPulse{
+  0%,100%{box-shadow:0 0 30px rgba(240,192,64,.22),inset 0 1px 0 rgba(255,255,255,.18);}
+  50%{box-shadow:0 0 52px rgba(240,192,64,.45),inset 0 1px 0 rgba(255,255,255,.24);}
+}
+.brand-emblem svg{width:42px;height:42px;}
+.game-title{
+  font-size:clamp(30px,9.4vw,42px);
+  font-weight:800;
+  letter-spacing:4px;
+  background:linear-gradient(180deg,#fff8e4 12%,#ffdf8a 52%,#d9a01d 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 16px rgba(240,192,64,.35));
+}
+.game-sub{
+  margin-top:6px;
+  font-size:clamp(14px,4.2vw,17px);
+  letter-spacing:5px;
+  color:#cfe0ff;
+  text-shadow:0 2px 12px rgba(20,60,140,.9);
+}
+.slogan{
+  display:inline-block;
+  margin-top:12px;
+  padding:6px 16px;
+  border-radius:99px;
+  font-size:13px;
+  letter-spacing:2px;
+  color:#ffdf8a;
+  background:rgba(20,40,90,.55);
+  border:1px solid rgba(240,192,64,.35);
+}
+.home-actions{display:flex;flex-direction:column;gap:12px;margin-top:8px;}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.home-foot{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:12px;color:var(--ink-dim);letter-spacing:.5px;margin-top:2px;
+}
+.home-foot .dot{width:3px;height:3px;border-radius:50%;background:rgba(140,180,255,.5);}
+.home-foot b{color:#ffdf8a;font-weight:600;}
+
+/* ============================================================
+   通用按钮
+   ============================================================ */
+.btn{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:0;border-radius:14px;
+  padding:12px 18px;
+  font-size:15px;font-weight:700;letter-spacing:1px;
+  color:#fff;cursor:pointer;overflow:hidden;
+  transition:transform .16s ease,box-shadow .22s ease,filter .22s ease,background .22s ease;
+  user-select:none;
+}
+.btn:active{transform:scale(.972);}
+.btn-primary{
+  background:linear-gradient(180deg,#ffe08a 0%,#f0c040 42%,#d99b12 100%);
+  color:#2a1a00;
+  box-shadow:0 10px 26px rgba(224,161,28,.34),inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 0 rgba(120,70,0,.25);
+}
+.btn-primary:hover{filter:brightness(1.05);}
+.btn-ghost{
+  background:linear-gradient(180deg,rgba(32,66,132,.72),rgba(14,32,70,.72));
+  border:1px solid rgba(110,160,255,.32);
+  color:#dbe7ff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 6px 18px rgba(4,10,26,.5);
+}
+.btn-ghost:hover{background:linear-gradient(180deg,rgba(40,80,156,.8),rgba(18,40,86,.8));}
+.btn-lg{width:100%;padding:17px;font-size:18px;letter-spacing:4px;border-radius:16px;}
+.btn-block{width:100%;margin-top:2px;}
+.btn-sm{padding:9px 14px;font-size:13px;border-radius:11px;letter-spacing:0;}
+.btn[disabled]{opacity:.55;cursor:default;filter:grayscale(.15);}
+.btn-icon{
+  flex:0 0 auto;width:38px;height:38px;padding:0;border-radius:12px;
+  background:rgba(20,44,90,.7);border:1px solid rgba(110,160,255,.3);color:#cfe0ff;
+}
+.btn-icon svg{width:18px;height:18px;}
+.ripple{
+  position:absolute;border-radius:50%;transform:scale(0);
+  background:rgba(255,255,255,.45);pointer-events:none;
+  animation:rippleOut .62s ease-out forwards;
+}
+@keyframes rippleOut{to{transform:scale(2.6);opacity:0;}}
+
+/* ============================================================
+   游戏区 + HUD
+   ============================================================ */
+#screen-game{background:linear-gradient(180deg,#061229 0%,#050d20 42%,#03080f 100%);}
+.game-deco{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.5;}
+.game-deco::before{
+  content:"";position:absolute;top:-20%;left:-30%;width:160%;height:70%;
+  background:radial-gradient(ellipse at 50% 50%,rgba(40,95,205,.4) 0%,rgba(40,95,205,0) 68%);
+}
+.game-deco::after{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(90,150,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(90,150,255,.055) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 78%);
+}
+.hud{
+  position:relative;z-index:6;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 11px;
+  background:linear-gradient(180deg,rgba(7,18,42,.97) 0%,rgba(7,18,42,.86) 100%);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.hud-row{display:flex;align-items:center;gap:10px;}
+.hud-level{
+  display:flex;align-items:center;gap:7px;
+  font-size:14px;font-weight:700;color:#ffe6a8;letter-spacing:.5px;
+  min-width:0;
+}
+.hud-level span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hud-pill{
+  font-size:11px;font-weight:600;color:#8fb4ff;
+  padding:2px 8px;border-radius:99px;
+  background:rgba(60,110,220,.22);border:1px solid rgba(110,160,255,.28);
+  white-space:nowrap;
+}
+.hud-mid{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.hud-score{
+  display:flex;align-items:baseline;gap:4px;
+  font-size:12px;color:var(--ink-dim);position:relative;
+}
+.hud-score b{font-size:19px;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.hud-bar{
+  height:6px;margin-top:9px;border-radius:99px;
+  background:rgba(255,255,255,.09);overflow:hidden;position:relative;
+}
+.hud-bar i{
+  display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#2f6ae0 0%,#6fa6ff 55%,#ffdf8a 100%);
+  box-shadow:0 0 12px rgba(110,166,255,.7);
+  transition:width .5s cubic-bezier(.2,.8,.25,1);
+}
+.hud-bar::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:translateX(-100%);
+  animation:barSheen 2.6s ease-in-out infinite;
+}
+@keyframes barSheen{0%{transform:translateX(-100%);}60%,100%{transform:translateX(100%);}}
+.score-pop{
+  position:absolute;right:34px;top:-6px;
+  font-size:15px;font-weight:800;color:#5fe0a0;
+  pointer-events:none;animation:popUp 1s ease-out forwards;
+  text-shadow:0 0 12px rgba(95,224,160,.8);
+}
+.score-pop.minus{color:#ff9a6b;text-shadow:0 0 12px rgba(255,154,107,.7);}
+@keyframes popUp{0%{opacity:0;transform:translateY(6px) scale(.8);}25%{opacity:1;transform:translateY(0) scale(1.1);}100%{opacity:0;transform:translateY(-26px) scale(1);}}
+
+.game-body{
+  position:relative;z-index:3;
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:16px 16px calc(30px + env(safe-area-inset-bottom));
+  max-width:560px;width:100%;margin:0 auto;
+  scroll-behavior:smooth;
+}
+.stage-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.stage-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;letter-spacing:1px;
+  color:#8fb4ff;padding:4px 11px;border-radius:99px;
+  background:rgba(30,62,128,.5);border:1px solid rgba(110,160,255,.3);
+}
+.stage-tag b{color:#fff;font-size:14px;}
+.stage-tag.alt{color:#ffdf8a;background:rgba(90,66,18,.42);border-color:rgba(240,192,64,.34);}
+
+/* ---------- 卡片 ---------- */
+.card{
+  position:relative;
+  background:linear-gradient(180deg,rgba(17,34,72,.94) 0%,rgba(9,20,45,.95) 100%);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 16px 16px;
+  box-shadow:0 20px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:cardIn .42s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.985);}to{opacity:1;transform:none;}}
+.card::before{
+  content:"";position:absolute;left:16px;right:16px;top:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(240,192,64,.95),transparent);
+}
+.card.clue-card::before{background:linear-gradient(90deg,transparent,#6fa6ff,transparent);}
+.card.clue-card::after{
+  content:"线索卡";
+  position:absolute;top:-11px;right:14px;
+  font-size:11px;font-weight:700;letter-spacing:2px;color:#0a1730;
+  padding:3px 10px;border-radius:99px;
+  background:linear-gradient(180deg,#bfe0ff,#6fa6ff);
+  box-shadow:0 4px 14px rgba(60,120,220,.5);
+}
+.q-title{
+  font-size:12.5px;font-weight:700;letter-spacing:2px;color:#6fa6ff;
+  margin-bottom:9px;display:flex;align-items:center;gap:7px;
+}
+.q-title::before{
+  content:"";width:5px;height:5px;border-radius:50%;
+  background:#6fa6ff;box-shadow:0 0 8px #6fa6ff;flex:0 0 auto;
+}
+.q-text{
+  font-size:15px;line-height:1.8;color:#d3e2ff;
+  overflow-wrap:anywhere;word-break:break-word;
+}
+.q-ask{
+  margin:15px 0 13px;padding:9px 12px;
+  font-size:15.5px;font-weight:700;line-height:1.6;color:#ffe6a8;
+  background:linear-gradient(90deg,rgba(240,192,64,.14),rgba(240,192,64,0));
+  border-left:3px solid var(--gold-400);border-radius:0 10px 10px 0;
+  overflow-wrap:anywhere;
+}
+
+/* ---------- 选项 ---------- */
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;
+  padding:13px 14px;border-radius:14px;
+  border:1px solid rgba(120,170,255,.22);
+  background:linear-gradient(180deg,rgba(15,32,68,.85),rgba(10,22,50,.85));
+  color:var(--ink);font-size:15px;line-height:1.65;
+  cursor:pointer;user-select:none;
+  transition:transform .16s ease,border-color .22s,background .22s,box-shadow .22s;
+  animation:optIn .38s ease both;
+  overflow-wrap:anywhere;word-break:break-word;
+}
+.opt:nth-child(1){animation-delay:.04s;}
+.opt:nth-child(2){animation-delay:.1s;}
+.opt:nth-child(3){animation-delay:.16s;}
+@keyframes optIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:none;}}
+.opt:not([disabled]):active{transform:scale(.985);}
+.opt:not([disabled]):hover{
+  border-color:rgba(140,190,255,.5);
+  background:linear-gradient(180deg,rgba(24,50,102,.9),rgba(14,30,66,.9));
+  box-shadow:0 0 0 1px rgba(110,160,255,.18),0 10px 24px rgba(10,30,70,.5);
+}
+.opt .badge{
+  flex:0 0 27px;height:27px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:#9dc0ff;
+  background:rgba(70,130,240,.18);
+  border:1px solid rgba(120,170,255,.32);
+  transition:background .2s,color .2s,border-color .2s;
+}
+.opt .opt-t{flex:1;}
+.opt.correct{
+  border-color:rgba(63,214,143,.75);
+  background:linear-gradient(180deg,rgba(16,72,48,.92),rgba(8,42,30,.92));
+  box-shadow:0 0 0 1px rgba(63,214,143,.28),0 10px 26px rgba(20,170,110,.22);
+  animation:correctPop .4s ease;
+}
+.opt.correct .badge{background:rgba(63,214,143,.9);color:#04231a;border-color:transparent;}
+.opt.wrong{
+  border-color:rgba(255,90,77,.75);
+  background:linear-gradient(180deg,rgba(88,24,24,.92),rgba(48,12,12,.92));
+  animation:wrongShake .42s ease;
+}
+.opt.wrong .badge{background:rgba(255,90,77,.9);color:#2a0603;border-color:transparent;}
+.opt.dim{opacity:.42;filter:saturate(.6);}
+.opt[disabled]{cursor:default;}
+@keyframes correctPop{0%{transform:scale(1);}45%{transform:scale(1.022);}100%{transform:scale(1);}}
+@keyframes wrongShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}44%{transform:translateX(5px);}68%{transform:translateX(-3px);}}
+
+/* ---------- 答题反馈 ---------- */
+.fb{
+  margin-top:16px;padding-top:15px;
+  border-top:1px dashed rgba(120,170,255,.26);
+  animation:fbIn .38s ease both;
+}
+@keyframes fbIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.fb-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.fb-ico{
+  width:23px;height:23px;border-radius:50%;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;
+}
+.fb-t{font-size:15.5px;font-weight:800;letter-spacing:.5px;}
+.fb-s{margin-left:auto;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+.fb-head.good{color:#5fe0a0;}
+.fb-head.good .fb-ico{background:#5fe0a0;color:#04231a;}
+.fb-head.bad{color:#ffa04d;}
+.fb-head.bad .fb-ico{background:#ffa04d;color:#2a1200;}
+.fb-p{font-size:14px;line-height:1.8;color:#bed2f5;margin-bottom:12px;overflow-wrap:anywhere;}
+.fb-best{
+  padding:12px 13px;border-radius:12px;margin-bottom:15px;
+  background:rgba(22,48,98,.6);
+  border:1px solid rgba(120,170,255,.3);
+  font-size:14px;line-height:1.75;color:#dbe7ff;
+  overflow-wrap:anywhere;
+}
+.fb-best b{display:block;margin-bottom:5px;color:#ffdf8a;font-size:13px;letter-spacing:1px;}
+.fb-why{display:block;margin-top:7px;font-size:13px;line-height:1.75;color:#a7bfe6;}
+
+/* ============================================================
+   弹层（规则 / 知识 / 制作说明 / 关卡结算 / 过渡 / 海报 / 确认框）
+   ============================================================ */
+.overlay{
+  position:absolute;inset:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+  background:rgba(2,7,18,.74);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  opacity:0;visibility:hidden;
+  transition:opacity .3s ease,visibility .3s;
+}
+.overlay.show{opacity:1;visibility:visible;}
+.ov-card{
+  width:100%;max-width:470px;max-height:84vh;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,#132850 0%,#081428 100%);
+  border:1px solid rgba(120,170,255,.3);
+  border-radius:20px;
+  padding:22px 18px 20px;
+  box-shadow:0 32px 76px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.07);
+  transform:translateY(18px) scale(.965);
+  transition:transform .34s cubic-bezier(.2,.8,.25,1);
+}
+.overlay.show .ov-card{transform:none;}
+.ov-title{
+  font-size:19px;font-weight:800;letter-spacing:2px;color:#ffe6a8;
+  display:flex;align-items:center;gap:9px;margin-bottom:14px;
+}
+.ov-title::before{
+  content:"";width:4px;height:19px;border-radius:3px;
+  background:linear-gradient(180deg,#ffdf8a,#d99b12);
+  box-shadow:0 0 12px rgba(240,192,64,.6);
+}
+.ov-sub{font-size:13.5px;line-height:1.85;color:#a9c0e8;margin-bottom:14px;}
+.rule-list{list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:11px;}
+.rule-list li{
+  display:flex;gap:10px;font-size:14px;line-height:1.75;color:#d3e2ff;
+  background:rgba(16,36,76,.5);border:1px solid rgba(110,160,255,.18);
+  border-radius:12px;padding:11px 12px;
+}
+.rule-list li i{
+  flex:0 0 22px;height:22px;border-radius:7px;font-style:normal;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#ffdf8a;
+  background:rgba(240,192,64,.14);border:1px solid rgba(240,192,64,.32);
+}
+.know-item{
+  padding:13px 13px 12px;border-radius:13px;margin-bottom:11px;
+  background:linear-gradient(180deg,rgba(18,38,80,.72),rgba(11,24,52,.72));
+  border:1px solid rgba(110,160,255,.2);
+}
+.know-item h4{
+  margin:0 0 6px;font-size:14.5px;color:#8fc0ff;letter-spacing:.5px;
+  display:flex;align-items:center;gap:7px;
+}
+.know-item h4 span{
+  font-size:10.5px;font-weight:700;color:#0a1730;background:#8fc0ff;
+  padding:1px 7px;border-radius:99px;letter-spacing:1px;
+}
+.know-item p{font-size:13.5px;line-height:1.8;color:#c3d6f7;}
+.know-note{font-size:12px;line-height:1.75;color:#7f96c0;margin-top:4px;}
+.ov-actions{display:flex;gap:10px;margin-top:6px;}
+.ov-actions .btn{flex:1;}
+
+/* 关卡过渡动画层 */
+#transition{
+  background:radial-gradient(ellipse at 50% 42%,#0c2554 0%,#03070f 76%);
+  z-index:70;
+}
+.trans-inner{text-align:center;padding:0 24px;max-width:440px;}
+.trans-idx{
+  font-size:12px;letter-spacing:7px;color:#6fa6ff;font-weight:700;margin-bottom:12px;
+  opacity:0;animation:transFade .6s ease .05s forwards;
+}
+.trans-title{
+  font-size:clamp(25px,7.4vw,33px);font-weight:800;letter-spacing:4px;
+  background:linear-gradient(180deg,#fff8e4,#ffdf8a 60%,#d9a01d);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 18px rgba(240,192,64,.3));
+  opacity:0;animation:transFade .6s ease .22s forwards;
+}
+.trans-line{
+  width:74px;height:2px;margin:15px auto;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#ffdf8a,transparent);
+  opacity:0;animation:transFade .6s ease .36s forwards;
+}
+.trans-desc{
+  font-size:14px;line-height:1.9;color:#b6cbee;
+  opacity:0;animation:transFade .6s ease .48s forwards;
+}
+.trans-tip{
+  margin-top:22px;font-size:12px;color:#6c82aa;letter-spacing:1px;
+  opacity:0;animation:transFade .6s ease .9s forwards;
+}
+@keyframes transFade{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+/* 关卡结算 */
+.clear-card{text-align:center;}
+.clear-ico{
+  width:78px;height:78px;margin:2px auto 14px;border-radius:24px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(240,192,64,.26),rgba(31,75,184,.3));
+  border:1px solid rgba(240,192,64,.5);
+  box-shadow:0 0 40px rgba(240,192,64,.3);
+  animation:emblemPulse 2.8s ease-in-out infinite;
+}
+.clear-ico svg{width:40px;height:40px;}
+.clear-title{font-size:20px;font-weight:800;letter-spacing:3px;color:#ffe6a8;margin-bottom:6px;}
+.clear-sub{font-size:13.5px;color:#a9c0e8;line-height:1.8;margin-bottom:16px;}
+.clear-score{
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+  margin-bottom:16px;
+}
+.clear-score b{
+  font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff,#ffdf8a);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.clear-score span{font-size:14px;color:#8fa8d4;}
+
+/* ============================================================
+   结局页
+   ============================================================ */
+#screen-ending{background:linear-gradient(180deg,#071635 0%,#050d20 46%,#03080f 100%);}
+.ending-glow{
+  position:absolute;top:-16%;left:50%;transform:translateX(-50%);
+  width:150%;height:52%;
+  background:radial-gradient(ellipse at 50% 50%,rgba(240,192,64,.2) 0%,rgba(240,192,64,0) 66%);
+  pointer-events:none;animation:glowBreathe 4.6s ease-in-out infinite;
+}
+@keyframes glowBreathe{0%,100%{opacity:.75;}50%{opacity:1;}}
+.ending-body{
+  position:relative;z-index:2;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(26px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));
+  max-width:560px;width:100%;margin:0 auto;
+  display:flex;flex-direction:column;gap:14px;
+}
+.rank-badge{
+  align-self:center;
+  width:96px;height:96px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border:2px solid rgba(240,192,64,.55);
+  background:radial-gradient(circle at 50% 30%,rgba(240,192,64,.32),rgba(20,40,90,.5));
+  box-shadow:0 0 50px rgba(240,192,64,.35),inset 0 0 26px rgba(240,192,64,.18);
+  animation:badgeIn .6s cubic-bezier(.2,.9,.25,1) both;
+}
+@keyframes badgeIn{from{opacity:0;transform:scale(.5) rotate(-16deg);}to{opacity:1;transform:none;}}
+.rank-badge b{font-size:36px;font-weight:800;color:#ffdf8a;line-height:1;letter-spacing:1px;}
+.rank-badge em{font-style:normal;font-size:10.5px;color:#c9a94f;letter-spacing:2px;margin-top:4px;}
+.rank-stars{display:flex;justify-content:center;gap:6px;margin-top:2px;}
+.rank-stars i{
+  width:15px;height:15px;display:block;
+  background:linear-gradient(180deg,#ffe08a,#d99b12);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  opacity:.28;transform:scale(.9);
+}
+.rank-stars i.on{opacity:1;transform:scale(1);animation:starPop .5s ease both;}
+@keyframes starPop{0%{transform:scale(0) rotate(-90deg);}70%{transform:scale(1.24) rotate(8deg);}100%{transform:scale(1);}}
+.rank-title{
+  text-align:center;font-size:26px;font-weight:800;letter-spacing:4px;
+  background:linear-gradient(180deg,#fff8e4,#ffdf8a 58%,#d9a01d);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.rank-sub{text-align:center;font-size:13.5px;line-height:1.8;color:#a9c0e8;}
+.score-panel{
+  display:flex;align-items:center;justify-content:space-around;
+  padding:16px 10px;border-radius:var(--radius);
+  background:linear-gradient(180deg,rgba(17,34,72,.92),rgba(9,20,45,.94));
+  border:1px solid var(--line);
+  box-shadow:0 18px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.sp-item{flex:1;text-align:center;min-width:0;}
+.sp-num{
+  display:block;font-size:24px;font-weight:800;color:#fff;
+  font-variant-numeric:tabular-nums;letter-spacing:.5px;
+}
+.sp-num.gold{color:#ffdf8a;}
+.sp-lb{display:block;font-size:11.5px;color:#8fa8d4;margin-top:5px;letter-spacing:1px;}
+.sp-div{width:1px;height:34px;background:rgba(120,170,255,.2);}
+.slogan-card{
+  padding:15px 16px;border-radius:var(--radius);
+  background:linear-gradient(120deg,rgba(240,192,64,.14),rgba(31,75,184,.2));
+  border:1px solid rgba(240,192,64,.34);
+  font-size:14.5px;line-height:1.85;color:#ffe9b8;
+  text-align:center;letter-spacing:.5px;
+}
+.level-breakdown{display:flex;flex-direction:column;gap:9px;}
+.bd-row{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 13px;border-radius:13px;
+  background:rgba(13,28,60,.8);border:1px solid rgba(110,160,255,.18);
+  font-size:13.5px;color:#c3d6f7;
+}
+.bd-row .bd-name{flex:1;min-width:0;}
+.bd-bar{flex:0 0 96px;height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;}
+.bd-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2f6ae0,#ffdf8a);transition:width .8s cubic-bezier(.2,.8,.25,1);}
+.bd-row .bd-val{flex:0 0 auto;color:#ffdf8a;font-weight:700;font-variant-numeric:tabular-nums;}
+.end-actions{display:flex;flex-direction:column;gap:11px;margin-top:2px;}
+.end-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.end-note{
+  font-size:11.5px;line-height:1.7;color:#6d84ad;text-align:center;
+  padding:0 6px;
+}
+
+/* 海报弹层 */
+.poster-wrap{display:flex;flex-direction:column;gap:12px;}
+.poster-img{
+  width:100%;border-radius:14px;display:block;
+  border:1px solid rgba(240,192,64,.35);
+  box-shadow:0 16px 40px rgba(0,0,0,.55);
+  background:#08152e;
+}
+.poster-fallback{
+  padding:16px;border-radius:14px;font-size:13.5px;line-height:1.9;color:#c3d6f7;
+  background:rgba(13,28,60,.85);border:1px dashed rgba(120,170,255,.35);
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.poster-tip{font-size:11.5px;line-height:1.7;color:#8199c2;text-align:center;}
+
+/* 轻提示 */
+#toast{
+  position:absolute;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));
+  transform:translate(-50%,16px);
+  z-index:120;pointer-events:none;
+  max-width:82%;text-align:center;
+  padding:10px 18px;border-radius:99px;
+  font-size:13px;line-height:1.5;color:#eaf2ff;
+  background:rgba(12,28,60,.95);
+  border:1px solid rgba(120,170,255,.35);
+  box-shadow:0 12px 30px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .28s ease,transform .28s ease;
+}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* ---------- 小屏适配 ---------- */
+@media (max-height:680px){
+  .brand{padding-top:8vh;}
+  .brand-emblem{width:60px;height:60px;margin-bottom:10px;}
+  .brand-emblem svg{width:34px;height:34px;}
+  .game-title{letter-spacing:3px;}
+  .home-content{gap:13px;}
+  .btn-lg{padding:15px;font-size:17px;}
+  .rank-badge{width:80px;height:80px;}
+  .rank-badge b{font-size:30px;}
+  .rank-title{font-size:22px;}
+  .sp-num{font-size:21px;}
+}
+@media (max-width:340px){
+  .home-grid{gap:8px;}
+  .btn{padding:11px 12px;font-size:14px;}
+  .opt{font-size:14px;padding:12px;}
+  .q-text{font-size:14px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ==================== 首页 ==================== -->
+  <section class="screen active" id="screen-home">
+    <div class="home-scene">
+      <svg viewBox="0 0 800 1200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#02070f"/>
+            <stop offset="34%" stop-color="#061634"/>
+            <stop offset="66%" stop-color="#0a2c5e"/>
+            <stop offset="100%" stop-color="#0e4176"/>
+          </linearGradient>
+          <radialGradient id="haloG" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#6fb0ff" stop-opacity=".55"/>
+            <stop offset="55%" stop-color="#2f6ae0" stop-opacity=".18"/>
+            <stop offset="100%" stop-color="#2f6ae0" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#124b8c"/>
+            <stop offset="100%" stop-color="#061a38"/>
+          </linearGradient>
+          <linearGradient id="seaNearG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0b2b57"/>
+            <stop offset="55%" stop-color="#061632"/>
+            <stop offset="100%" stop-color="#030a16"/>
+          </linearGradient>
+          <linearGradient id="gateG" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#0a1c3c"/>
+            <stop offset="42%" stop-color="#1d417f"/>
+            <stop offset="100%" stop-color="#0a1c3c"/>
+          </linearGradient>
+          <linearGradient id="beamG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2a5499"/>
+            <stop offset="100%" stop-color="#0d2350"/>
+          </linearGradient>
+          <linearGradient id="goldG" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="rgba(240,192,64,0)"/>
+            <stop offset="50%" stop-color="rgba(255,223,138,.95)"/>
+            <stop offset="100%" stop-color="rgba(240,192,64,0)"/>
+          </linearGradient>
+          <linearGradient id="scanG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(111,166,255,0)"/>
+            <stop offset="50%" stop-color="rgba(140,200,255,.85)"/>
+            <stop offset="100%" stop-color="rgba(111,166,255,0)"/>
+          </linearGradient>
+        </defs>
+
+        <rect width="800" height="1200" fill="url(#skyG)"/>
+        <circle cx="400" cy="470" r="330" fill="url(#haloG)"/>
+
+        <g class="stars" fill="#cfe4ff">
+          <circle cx="86"  cy="120" r="1.6" opacity=".75"/>
+          <circle cx="188" cy="212" r="1.2" opacity=".55"/>
+          <circle cx="276" cy="86"  r="1.9" opacity=".85"/>
+          <circle cx="372" cy="168" r="1.3" opacity=".6"/>
+          <circle cx="470" cy="96"  r="1.5" opacity=".7"/>
+          <circle cx="560" cy="196" r="1.1" opacity=".5"/>
+          <circle cx="654" cy="128" r="1.8" opacity=".8"/>
+          <circle cx="726" cy="248" r="1.2" opacity=".55"/>
+          <circle cx="140" cy="322" r="1.4" opacity=".5"/>
+          <circle cx="618" cy="348" r="1.5" opacity=".55"/>
+          <circle cx="330" cy="272" r="1"   opacity=".4"/>
+          <circle cx="516" cy="286" r="1.2" opacity=".45"/>
+        </g>
+
+        <!-- 远处吊机剪影 -->
+        <g fill="#071a37">
+          <path d="M96 760 L96 596 L118 596 L118 760 Z"/>
+          <path d="M84 604 L300 566 L302 582 L84 620 Z"/>
+          <path d="M188 596 L188 640 L204 640 L204 596 Z"/>
+          <path d="M560 760 L560 588 L582 588 L582 760 Z"/>
+          <path d="M558 600 L768 636 L764 652 L556 616 Z"/>
+          <path d="M660 640 L660 600 L676 600 L676 640 Z"/>
+          <rect x="0" y="700" width="800" height="62" fill="#061530"/>
+        </g>
+
+        <!-- 远海 -->
+        <rect x="0" y="760" width="800" height="70" fill="url(#seaG)"/>
+        <path class="wave wave-far" d="M-200 784 q 100 -12 200 0 t 200 0 t 200 0 t 200 0 t 200 0 t 200 0 v 46 h -1400 z" fill="rgba(90,160,255,.16)"/>
+
+        <!-- 码头 -->
+        <rect x="0" y="828" width="800" height="62" fill="#0a1c38"/>
+        <rect x="0" y="828" width="800" height="4" fill="#22467f" opacity=".7"/>
+        <g stroke="rgba(240,192,64,.5)" stroke-width="2" stroke-dasharray="16 12">
+          <line x1="0" y1="872" x2="800" y2="872"/>
+        </g>
+
+        <!-- 集装箱堆场 -->
+        <g class="yard">
+          <rect x="52"  y="786" width="140" height="42" rx="5" fill="#1f4f9c"/>
+          <rect x="52"  y="744" width="140" height="42" rx="5" fill="#9e2f28"/>
+          <rect x="36"  y="828" width="172" height="42" rx="5" fill="#c9931f"/>
+          <g stroke="rgba(0,0,0,.28)" stroke-width="2">
+            <line x1="70" y1="786" x2="70" y2="828"/><line x1="104" y1="786" x2="104" y2="828"/><line x1="140" y1="786" x2="140" y2="828"/>
+            <line x1="70" y1="744" x2="70" y2="786"/><line x1="104" y1="744" x2="104" y2="786"/><line x1="140" y1="744" x2="140" y2="786"/>
+          </g>
+          <rect x="608" y="786" width="140" height="42" rx="5" fill="#1f4f9c"/>
+          <rect x="608" y="744" width="140" height="42" rx="5" fill="#2c7a4b"/>
+          <rect x="592" y="828" width="172" height="42" rx="5" fill="#9e2f28"/>
+          <g stroke="rgba(0,0,0,.28)" stroke-width="2">
+            <line x1="626" y1="786" x2="626" y2="828"/><line x1="660" y1="786" x2="660" y2="828"/><line x1="696" y1="786" x2="696" y2="828"/>
+            <line x1="626" y1="744" x2="626" y2="786"/><line x1="660" y1="744" x2="660" y2="786"/><line x1="696" y1="744" x2="696" y2="786"/>
+          </g>
+        </g>
+
+        <!-- 国门 -->
+        <g class="gate">
+          <rect x="222" y="350" width="70" height="478" rx="9" fill="url(#gateG)"/>
+          <rect x="508" y="350" width="70" height="478" rx="9" fill="url(#gateG)"/>
+          <rect x="244" y="366" width="6" height="446" fill="rgba(240,192,64,.4)"/>
+          <rect x="530" y="366" width="6" height="446" fill="rgba(240,192,64,.4)"/>
+          <rect x="186" y="288" width="428" height="68" rx="13" fill="url(#beamG)"/>
+          <rect x="186" y="348" width="428" height="5" rx="2.5" fill="url(#goldG)"/>
+          <rect x="204" y="300" width="392" height="40" rx="8" fill="rgba(4,10,24,.5)"/>
+          <rect class="scan" x="204" y="330" width="392" height="3" fill="url(#scanG)"/>
+          <text x="400" y="332" text-anchor="middle" font-size="36" font-weight="bold"
+                font-family="PingFang SC,Microsoft YaHei,sans-serif" fill="#ffdf8a"
+                letter-spacing="8" opacity=".95">国 门</text>
+        </g>
+
+        <!-- 近海 -->
+        <rect x="0" y="890" width="800" height="310" fill="url(#seaNearG)"/>
+        <path class="wave wave-1" d="M-220 946 q 110 -16 220 0 t 220 0 t 220 0 t 220 0 t 220 0 v 70 h -1320 z" fill="rgba(70,140,240,.2)"/>
+        <path class="wave wave-2" d="M-140 1026 q 120 -18 240 0 t 240 0 t 240 0 t 240 0 v 80 h -1200 z" fill="rgba(50,110,205,.18)"/>
+        <path class="wave wave-3" d="M-260 1112 q 130 -20 260 0 t 260 0 t 260 0 t 260 0 v 90 h -1300 z" fill="rgba(30,80,165,.22)"/>
+      </svg>
+    </div>
+    <div class="home-veil"></div>
+    <span class="spark" style="left:14%;bottom:24%;animation-duration:7s;animation-delay:.4s;"></span>
+    <span class="spark" style="left:32%;bottom:16%;animation-duration:9s;animation-delay:1.6s;"></span>
+    <span class="spark" style="left:58%;bottom:28%;animation-duration:8s;animation-delay:2.8s;"></span>
+    <span class="spark" style="left:76%;bottom:12%;animation-duration:10s;animation-delay:1.1s;"></span>
+    <span class="spark" style="left:88%;bottom:34%;animation-duration:7.6s;animation-delay:3.4s;"></span>
+
+    <div class="home-content">
+      <div class="brand">
+        <div class="brand-emblem">
+          <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M24 4 L40 10 V23 C40 33 33 41.5 24 44.5 C15 41.5 8 33 8 23 V10 Z"
+                  fill="rgba(240,192,64,.14)" stroke="#f0c040" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M16 30 L16 17 M32 30 L32 17 M14 17 L34 17" stroke="#ffdf8a" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M20.5 35 L23.2 38 L29 31.6" stroke="#8fe6b6" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="game-title">国门行动</h1>
+        <div class="game-sub">反走私守护者</div>
+        <div class="slogan">全民反走私 · 你我齐参与</div>
+      </div>
+
+      <div class="home-actions">
+        <button class="btn btn-primary btn-lg" id="btn-start" type="button">开始行动</button>
+        <div class="home-grid">
+          <button class="btn btn-ghost" id="btn-rules" type="button">游戏规则</button>
+          <button class="btn btn-ghost" id="btn-knowledge" type="button">反走私知识</button>
+          <button class="btn btn-ghost" id="btn-about" type="button">制作说明</button>
+          <button class="btn btn-ghost" id="btn-sound-home" type="button">音效：开</button>
+        </div>
+      </div>
+
+      <div class="home-foot">
+        <span>历史最高分 <b id="home-best">--</b></span>
+        <span class="dot"></span>
+        <span>已通关 <b id="home-clear">0 / 3</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 游戏区 ==================== -->
+  <section class="screen" id="screen-game">
+    <div class="game-deco"></div>
+
+    <div class="hud" id="hud">
+      <div class="hud-row">
+        <button class="btn btn-icon" id="btn-back" type="button" aria-label="返回首页">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5 L8 12 L15 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="hud-level"><span id="hud-level">第一关 · 国门检查</span></div>
+        <div class="hud-mid">
+          <div class="hud-score" id="hud-score-box">得分 <b id="hud-score">0</b></div>
+          <button class="btn btn-icon" id="btn-sound-hud" type="button" aria-label="音效开关">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="ico-on">
+              <path d="M4 9h3l4.5-3.5v13L7 15H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M15.5 9.2a4 4 0 0 1 0 5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M18 6.6a7.5 7.5 0 0 1 0 10.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="ico-off" style="display:none">
+              <path d="M4 9h3l4.5-3.5v13L7 15H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M16 9.5 L21 14.5 M21 9.5 L16 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="hud-bar"><i id="hud-bar-fill"></i></div>
+    </div>
+
+    <div class="game-body" id="game-body"></div>
+  </section>
+
+  <!-- ==================== 结局页 ==================== -->
+  <section class="screen" id="screen-ending">
+    <div class="ending-glow"></div>
+    <div class="ending-body">
+      <div class="rank-badge"><b id="rank-letter">A</b><em id="rank-tag">评级</em></div>
+      <div class="rank-stars" id="rank-stars"><i></i><i></i><i></i></div>
+      <div class="rank-title" id="rank-title">—</div>
+      <div class="rank-sub" id="rank-sub"></div>
+
+      <div class="score-panel">
+        <div class="sp-item"><span class="sp-num gold" id="end-score">0</span><span class="sp-lb">总得分 / 100</span></div>
+        <div class="sp-div"></div>
+        <div class="sp-item"><span class="sp-num" id="end-correct">0 / 14</span><span class="sp-lb">正确题数</span></div>
+        <div class="sp-div"></div>
+        <div class="sp-item"><span class="sp-num" id="end-best">--</span><span class="sp-lb">历史最高分</span></div>
+      </div>
+
+      <div class="level-breakdown" id="end-breakdown"></div>
+
+      <div class="slogan-card" id="end-slogan">—</div>
+
+      <div class="end-actions">
+        <button class="btn btn-primary btn-lg" id="btn-retry" type="button">重新挑战</button>
+        <div class="end-row">
+          <button class="btn btn-ghost" id="btn-poster" type="button">生成结局卡片</button>
+          <button class="btn btn-ghost" id="btn-home2" type="button">返回首页</button>
+        </div>
+      </div>
+
+      <p class="end-note">本结果为本科普互动游戏的娱乐性评价，不代表任何执法资格、官方认定或荣誉。</p>
+    </div>
+  </section>
+
+  <!-- ==================== 过渡层 ==================== -->
+  <div class="overlay" id="transition">
+    <div class="trans-inner">
+      <div class="trans-idx" id="trans-idx">LEVEL 01</div>
+      <div class="trans-title" id="trans-title">国门检查</div>
+      <div class="trans-line"></div>
+      <div class="trans-desc" id="trans-desc"></div>
+      <div class="trans-tip">轻触屏幕继续</div>
+    </div>
+  </div>
+
+  <!-- ==================== 关卡结算 ==================== -->
+  <div class="overlay" id="ov-clear">
+    <div class="ov-card clear-card">
+      <div class="clear-ico">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <path d="M24 5 L41 11.5 V24 C41 34 33.5 42 24 45 C14.5 42 7 34 7 24 V11.5 Z"
+                fill="rgba(240,192,64,.14)" stroke="#f0c040" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M16.5 24.5 L22 30 L32 18.5" stroke="#8fe6b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="clear-title" id="clear-title">本关完成</div>
+      <div class="clear-sub" id="clear-sub"></div>
+      <div class="clear-score"><b id="clear-score">0</b><span id="clear-total">/ 50 分</span></div>
+      <button class="btn btn-primary btn-lg" id="btn-clear-next" type="button">继续</button>
+    </div>
+  </div>
+
+  <!-- ==================== 游戏规则 ==================== -->
+  <div class="overlay" id="ov-rules">
+    <div class="ov-card">
+      <div class="ov-title">游戏规则</div>
+      <ul class="rule-list">
+        <li><i>1</i><span>你将作为<b>反走私宣传志愿者</b>，跟随三个关卡完成一次完整的国门行动。</span></li>
+        <li><i>2</i><span><b>第一关 · 国门检查</b>：5 个港口情景，每个情景 3 个选项，选出更妥当的处理方式，每题满分 10 分。</span></li>
+        <li><i>3</i><span><b>第二关 · 线索研判</b>：4 组线索卡片，在不同处置方式中做出判断，按妥当程度计分，满分 20 分。</span></li>
+        <li><i>4</i><span><b>第三关 · 知识挑战</b>：5 道反走私常识选择题，每题 6 分，满分 30 分。</span></li>
+        <li><i>5</i><span>全场满分 <b>100 分</b>，共 14 道判断。答完后按总分获得评级与结局卡片。</span></li>
+        <li><i>6</i><span>每题作答后都会给出解析，<b>不必追求满分</b>，弄懂为什么更重要。</span></li>
+      </ul>
+      <p class="ov-sub">小提示：游戏中的情景均为虚构，仅用于反走私常识科普，不对应任何真实人物或事件。</p>
+      <div class="ov-actions">
+        <button class="btn btn-primary" id="btn-rules-start" type="button">开始行动</button>
+        <button class="btn btn-ghost" data-close="ov-rules" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 反走私知识 ==================== -->
+  <div class="overlay" id="ov-know">
+    <div class="ov-card">
+      <div class="ov-title">反走私知识速览</div>
+      <div class="know-item">
+        <h4><span>常识</span>什么是走私</h4>
+        <p>通俗地说，走私是指逃避海关监管，非法运输、携带、邮寄国家禁止或限制进出境的货物、物品，或者依法应当缴纳税款的货物、物品进出境的行为。具体认定由有权部门依法作出。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>危害</span>走私会带来什么</h4>
+        <p>走私会扰乱正常的进出口秩序和市场秩序，造成国家税收流失，还可能带入质量安全没有保障的商品，甚至与枪支弹药、毒品、濒危物种制品等违法犯罪活动交织，威胁国家安全和公众健康。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>做法</span>普通人可以做什么</h4>
+        <p>了解反走私常识，向家人朋友传递准确信息；遇到可疑线索，通过海关 12360 统一服务热线、当地海关或公安机关等正规渠道如实反映；不擅自处置、不越界"执法"。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>警惕</span>这些"好处"要当心</h4>
+        <p>交代不清内容、要求保密、许诺高额报酬的代收、代寄、代购请求，风险很高。不要出借自己的身份信息、银行账户和收货地址给他人使用。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>理性</span>不凭外观和传闻下结论</h4>
+        <p>商品的外观、价格、来源地都不能直接等同于违法。是否违规需要由有权部门依法核查、依据证据认定。传播未经证实的信息，可能给他人造成伤害，自己也可能担责。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>隐私</span>保护好自己，也尊重他人</h4>
+        <p>参与反走私宣传时，注意保护个人信息；不猜测、不公开他人身份信息与住址，不参与"人肉曝光"，把判断交给有权部门依法处理。</p>
+      </div>
+      <p class="know-note">以上内容为反走私常识科普，不构成法律意见。涉及具体法律问题，请以现行法律法规和主管部门的解释为准。</p>
+      <div class="ov-actions">
+        <button class="btn btn-primary" data-close="ov-know" type="button">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 制作说明 ==================== -->
+  <div class="overlay" id="ov-about">
+    <div class="ov-card">
+      <div class="ov-title">制作说明</div>
+      <div class="know-item">
+        <h4><span>作品</span>国门行动：反走私守护者</h4>
+        <p>宣传主题：全民反走私，你我齐参与。作品类型：反走私主题互动剧情 + 情景判断 + 益智闯关 H5 游戏。面向大学生及普通公众，用于反走私宣传与普法科普。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>原创</span>素材与代码</h4>
+        <p>全部文字脚本、题目、界面与图形均为原创，港口、国门、集装箱、海岸线等场景由 CSS 与 SVG 手绘实现，音效由 Web Audio API 实时合成，未使用任何第三方图片、音频、字体文件或开源游戏代码。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>技术</span>运行方式</h4>
+        <p>单文件 HTML5 + CSS3 + 原生 JavaScript，双击即可在浏览器运行，无需联网、无需安装依赖、无需服务器。</p>
+      </div>
+      <div class="know-item">
+        <h4><span>隐私</span>数据说明</h4>
+        <p>游戏不要求登录，不收集姓名、身份证号、手机号等任何个人信息。仅在本地浏览器中保存"历史最高分""已通关关卡""音效开关"三项设置，卸载或清理浏览器数据即会消失。</p>
+      </div>
+      <p class="know-note">本作品为科普互动游戏，所有情景、人物、商户均为虚构，不对应任何真实主体；游戏评价不代表执法资格或官方荣誉。</p>
+      <div class="ov-actions">
+        <button class="btn btn-primary" data-close="ov-about" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 结局卡片 ==================== -->
+  <div class="overlay" id="ov-poster">
+    <div class="ov-card">
+      <div class="ov-title">结局卡片</div>
+      <div class="poster-wrap">
+        <img class="poster-img" id="poster-img" alt="国门行动结局卡片" style="display:none">
+        <div class="poster-fallback" id="poster-fallback" style="display:none"></div>
+        <p class="poster-tip" id="poster-tip">在手机上可长按图片保存到相册。</p>
+      </div>
+      <div class="ov-actions" style="margin-top:14px;">
+        <button class="btn btn-primary" id="btn-poster-save" type="button">保存图片</button>
+        <button class="btn btn-ghost" id="btn-poster-copy" type="button">复制文案</button>
+      </div>
+      <div class="ov-actions" style="margin-top:10px;">
+        <button class="btn btn-ghost" data-close="ov-poster" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 通用确认框 ==================== -->
+  <div class="overlay" id="ov-confirm">
+    <div class="ov-card" style="max-width:380px;">
+      <div class="ov-title">确认操作</div>
+      <p class="ov-sub" id="confirm-text" style="margin-bottom:18px;">确定要离开当前进度吗？</p>
+      <div class="ov-actions">
+        <button class="btn btn-primary" id="btn-confirm-ok" type="button">确定</button>
+        <button class="btn btn-ghost" id="btn-confirm-cancel" type="button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+/* ============================================================
+   国门行动：反走私守护者  —  主脚本
+   目录：
+   1. 工具函数   2. 本地存储   3. 音效(Web Audio)   4. 题库数据
+   5. 全局状态   6. 界面渲染   7. 计分与流程   8. 结算与结局
+   9. 结局卡片   10. 事件绑定与初始化
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ==========================================================
+     1. 工具函数
+     ========================================================== */
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) {
+    return Array.prototype.slice.call((root || document).querySelectorAll(sel));
+  };
+  var LETTERS = ['A', 'B', 'C', 'D'];
+
+  /* ==========================================================
+     2. 本地存储（不支持时不抛错，自动降级为内存存储）
+     ========================================================== */
+  var STORE = (function () {
+    var usable = false;
+    try {
+      var t = '__gdk_test__';
+      window.localStorage.setItem(t, '1');
+      window.localStorage.removeItem(t);
+      usable = true;
+    } catch (e) { usable = false; }
+    var mem = {};
+    return {
+      usable: usable,
+      get: function (k, d) {
+        try {
+          var v = usable ? window.localStorage.getItem(k) : (mem[k] === undefined ? null : mem[k]);
+          return (v === null || v === undefined) ? d : v;
+        } catch (e) { return d; }
+      },
+      set: function (k, v) {
+        try {
+          if (usable) { window.localStorage.setItem(k, String(v)); }
+          else { mem[k] = String(v); }
+        } catch (e) { /* 写入失败不影响游戏 */ }
+      }
+    };
+  })();
+
+  var KEY_BEST = 'gdk_best_score';
+  var KEY_LEVELS = 'gdk_levels_done';
+  var KEY_SOUND = 'gdk_sound_on';
+
+  function getBest() {
+    var v = parseInt(STORE.get(KEY_BEST, '0'), 10);
+    return isNaN(v) ? 0 : v;
+  }
+  function setBest(v) { STORE.set(KEY_BEST, v); }
+
+  function getLevelsDone() {
+    try {
+      var raw = STORE.get(KEY_LEVELS, '');
+      if (!raw) { return [false, false, false]; }
+      var arr = JSON.parse(raw);
+      if (!arr || arr.length !== 3) { return [false, false, false]; }
+      return [!!arr[0], !!arr[1], !!arr[2]];
+    } catch (e) { return [false, false, false]; }
+  }
+  function markLevelDone(lv) {
+    var arr = getLevelsDone();
+    arr[lv - 1] = true;
+    STORE.set(KEY_LEVELS, JSON.stringify(arr));
+  }
+
+  /* ==========================================================
+     3. 音效：全部由 Web Audio API 实时合成，不依赖音频文件
+     ========================================================== */
+  var Sound = (function () {
+    var ctx = null;
+    var enabled = STORE.get(KEY_SOUND, '1') !== '0';
+
+    function ensure() {
+      if (!enabled) { return null; }
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) { return null; }
+        if (!ctx) { ctx = new AC(); }
+        if (ctx.state === 'suspended' && ctx.resume) { ctx.resume(); }
+        return ctx;
+      } catch (e) { return null; }
+    }
+
+    function tone(o) {
+      var c = ensure();
+      if (!c) { return; }
+      try {
+        var t0 = c.currentTime + (o.delay || 0);
+        var osc = c.createOscillator();
+        var gain = c.createGain();
+        osc.type = o.type || 'sine';
+        osc.frequency.setValueAtTime(o.f, t0);
+        if (o.to) { osc.frequency.exponentialRampToValueAtTime(o.to, t0 + o.d); }
+        var vol = (o.v === undefined) ? 0.08 : o.v;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + o.d);
+        osc.connect(gain);
+        gain.connect(c.destination);
+        osc.start(t0);
+        osc.stop(t0 + o.d + 0.03);
+      } catch (e) { /* 忽略音频异常 */ }
+    }
+
+    var lib = {
+      click: [{ f: 540, d: 0.07, type: 'square', v: 0.045 }],
+      press: [{ f: 420, d: 0.09, type: 'triangle', v: 0.06 }, { f: 720, d: 0.12, type: 'triangle', v: 0.05, delay: 0.06 }],
+      correct: [{ f: 660, d: 0.13, type: 'triangle', v: 0.085 }, { f: 880, d: 0.14, type: 'triangle', v: 0.085, delay: 0.1 }, { f: 1174, d: 0.22, type: 'sine', v: 0.07, delay: 0.2 }],
+      wrong: [{ f: 220, to: 150, d: 0.28, type: 'sawtooth', v: 0.06 }, { f: 160, to: 110, d: 0.3, type: 'sawtooth', v: 0.045, delay: 0.07 }],
+      level: [{ f: 523, d: 0.14, type: 'triangle', v: 0.075 }, { f: 659, d: 0.14, type: 'triangle', v: 0.075, delay: 0.12 }, { f: 784, d: 0.16, type: 'triangle', v: 0.075, delay: 0.24 }, { f: 1046, d: 0.3, type: 'sine', v: 0.07, delay: 0.36 }],
+      finish: [{ f: 523, d: 0.16, type: 'sine', v: 0.085 }, { f: 659, d: 0.16, type: 'sine', v: 0.085, delay: 0.14 }, { f: 784, d: 0.16, type: 'sine', v: 0.085, delay: 0.28 }, { f: 1046, d: 0.22, type: 'sine', v: 0.09, delay: 0.42 }, { f: 1318, d: 0.5, type: 'sine', v: 0.07, delay: 0.58 }]
+    };
+
+    return {
+      isOn: function () { return enabled; },
+      toggle: function () {
+        enabled = !enabled;
+        STORE.set(KEY_SOUND, enabled ? '1' : '0');
+        if (enabled) { ensure(); this.sfx('press'); }
+        return enabled;
+      },
+      sfx: function (name) {
+        if (!enabled) { return; }
+        var notes = lib[name];
+        if (!notes) { return; }
+        for (var i = 0; i < notes.length; i++) { tone(notes[i]); }
+      },
+      unlock: function () { ensure(); }
+    };
+  })();
+
+  /* ==========================================================
+     4. 题库数据（全部原创，情景均为虚构）
+     ========================================================== */
+
+  /* ---- 第一关：国门检查（5 题 × 10 分，正确 10 分） ---- */
+  var L1_DATA = [
+    {
+      title: '情景一 · 说不清来路的货',
+      text: '在港口做反走私宣传志愿服务时，你注意到一批货物的外包装已经破损，随行人员只能提供含糊的口头说明，拿不出任何合规的证明文件，还反复催着“快点放行”。',
+      question: '面对这样的情况，比较妥当的处理方式是什么？',
+      options: [
+        { t: '当场认定这批货就是走私货，拍照发到网上让大家一起“曝光”。', score: 0, fb: '仅凭外观、包装和口头说法就给货物定性，既不准确，也可能侵犯他人的合法权益，还可能干扰正常的通关秩序。' },
+        { t: '不擅自处置，把看到的情况如实告诉现场值班的海关工作人员，由他们依法核查。', ok: true, score: 10, fb: '是否符合规定，需要由有权部门依法核查、依据证据认定。如实反映客观情况、不擅自处置，既守法，也尊重他人的合法权益。' },
+        { t: '让随行人员自己写一份说明当作凭证，先放行再说。', score: 0, fb: '个人手写的说明无法替代合规的证明文件。这样做等于把本该依法核查的问题“糊”过去，反而可能让有问题的货物流入市场。' }
+      ]
+    },
+    {
+      title: '情景二 · 码头边的低声交谈',
+      text: '傍晚在码头附近的便利店，你听到两个陌生人低声交谈，提到有一批“没走正规手续”的货打算“等晚上再过关”，还说到一个模糊的接头地点。',
+      question: '此时你比较合适的做法是什么？',
+      options: [
+        { t: '上前拦住他们，要求把货物情况交代清楚，否则不许离开。', score: 0, fb: '你没有执法权，贸然上前既可能让自己陷入人身风险，也可能打草惊蛇、影响后续依法处理。' },
+        { t: '当作没听见，快点离开，反走私跟自己没什么关系。', score: 0, fb: '反走私不只是某个部门的事。事不关己的态度，会让一条线索白白流失。' },
+        { t: '留意时间、地点和听到的关键信息，事后通过正规渠道反映。', ok: true, score: 10, fb: '记录客观信息、不擅自行动、通过正规渠道反映，是既安全又有效的做法。' }
+      ]
+    },
+    {
+      title: '情景三 · “帮忙收个包裹”',
+      text: '一位网上认识的“朋友”说有个赚快钱的机会：帮忙代收一个包裹，再转寄给另一个人，就给你一笔“辛苦费”，还特意叮嘱你不要问里面是什么。',
+      question: '你怎么判断和应对？',
+      options: [
+        { t: '只是帮忙转寄，又不是自己买的，给钱就做。', score: 0, fb: '“只是转寄”恰恰是最常见的风险点。一旦包裹里是违禁物品，代收代寄的人同样脱不了干系。' },
+        { t: '明确拒绝这类交代不清、要求保密、还用高额报酬诱导的代收代寄请求，必要时把情况反映给有关部门。', ok: true, score: 10, fb: '交代不清内容、刻意回避、又用报酬诱导的委托，风险很高。拒绝并反映，是保护自己也保护他人的做法。' },
+        { t: '先把包裹收下放家里，等对方催的时候再说。', score: 0, fb: '把来路不明的包裹收进自己家里，等于把风险留在身边。这种“先收下再说”的做法不可取。' }
+      ]
+    },
+    {
+      title: '情景四 · 线索该往哪儿送',
+      text: '经过一段时间的学习，你陆续了解到几条与走私有关的可疑线索，很想为反走私出一份力。',
+      question: '下面哪种反映方式最合适？',
+      options: [
+        { t: '把线索截图发到社交平台，配上自己的推测，请网友帮忙“人肉”当事人。', score: 0, fb: '公开推测、发动“人肉”，容易误伤无辜，也可能侵犯他人合法权益，还会打草惊蛇。' },
+        { t: '联系自称能“内部处理”的陌生中介，付费托他去打点。', score: 0, fb: '所谓“内部处理”的中介往往不可信，付费托办不仅解决不了问题，还可能让自己上当受骗。' },
+        { t: '通过海关 12360 统一服务热线、当地海关或公安机关等正规渠道，如实提供自己了解到的信息。', ok: true, score: 10, fb: '12360 是全国海关统一服务热线，受理业务咨询、通关求助、投诉举报等事项。通过正规渠道如实反映，线索才会被依法处理。' }
+      ]
+    },
+    {
+      title: '情景五 · “看着就不像好人”',
+      text: '一次码头巡查中，同行的志愿者指着一个路过的人说：“这人看上去就不对劲，肯定有问题。”周围几个人也跟着附和。',
+      question: '面对这种判断，正确的做法是什么？',
+      options: [
+        { t: '把疑点和传闻分开记录，只反映自己看到的客观事实，是否违法由有权部门依法调查、依据证据认定。', ok: true, score: 10, fb: '外观印象和传闻都不能作为结论。把客观事实与主观猜测分开、交给有权部门依法核查，才是负责的态度。' },
+        { t: '认同这种说法，把“看起来可疑”的印象当作结论报上去。', score: 0, fb: '“看起来像”不是证据。用印象代替事实，可能冤枉无辜的人。' },
+        { t: '把传闻发到群里，让大家一起讨论谁最可疑。', score: 0, fb: '在群里传播未经证实的猜测，既容易误伤他人，也可能让自己承担不必要的责任。' }
+      ]
+    }
+  ];
+
+  /* ---- 第二关：线索研判（4 题，最优 5 分 / 可行 3 分 / 欠妥 1 分） ---- */
+  var L2_DATA = [
+    {
+      title: '线索一 · 来历不明的“洋货”',
+      text: '周末的社区反走私宣传活动上，你协助维持秩序。有居民反映，旁边一家商户在售的进口商品没有中文标签，也拿不出合法的来源凭证，价格却明显低于同类商品。',
+      question: '你的判断是？',
+      options: [
+        { t: '按规定进一步核查', ok: true, score: 5, fb: '价格异常、标签和来源凭证都不清楚，先把情况告知现场工作人员，按规定进一步核查，是最直接也最稳妥的处置方式。' },
+        { t: '保存相关线索并通过正规渠道反映', score: 3, fb: '这也是可行的做法。不过现场已经有工作人员在，先按流程核查，处理效率会更高。' },
+        { t: '不擅自行动，等待有权部门依法处理', score: 1, fb: '不擅自处置是对的，但完全被动可能让线索流失。可以和工作人员或正规渠道同步一下情况。' }
+      ]
+    },
+    {
+      title: '线索二 · 刷屏的“港口走私”视频',
+      text: '你在社交平台上刷到一段短视频，画面模糊晃动，配音称“某港口出现大批走私货”，没有说明来源，评论区已经有人开始转发和猜测。',
+      question: '你的判断是？',
+      options: [
+        { t: '按规定进一步核查', score: 1, fb: '你是普通市民，既没有核查权限，也不了解真实情况。凭一段没有出处的视频无法判断，不宜自行“核查”或者下结论。' },
+        { t: '保存相关线索并通过正规渠道反映', ok: true, score: 5, fb: '先不转发、不扩散，保留原始链接等线索，通过正规渠道反映，让有权部门去核实，是更合理的做法。' },
+        { t: '不擅自行动，等待有权部门依法处理', score: 3, fb: '态度稳妥。但如果只是“看着不动”，未经证实的信息仍然会继续扩散，主动提供线索会更有效。' }
+      ]
+    },
+    {
+      title: '线索三 · “用你家地址收个包裹”',
+      text: '一位不太熟的邻居请你用自己家的地址帮忙接收一个包裹，之后转交给另一个人。他不愿说明包裹里是什么，还表示会给你一笔“好处费”，让你别多问。',
+      question: '你的判断是？',
+      options: [
+        { t: '按规定进一步核查', score: 1, fb: '你没有权限拆开或者检查他人的包裹，自行“核查”既越界，也可能让自己陷入风险。' },
+        { t: '保存相关线索并通过正规渠道反映', ok: true, score: 5, fb: '交代不清内容、刻意回避、又用报酬诱导的委托，风险很高。明确拒绝，保留相关信息并通过正规渠道反映，更为妥当。' },
+        { t: '不擅自行动，等待有权部门依法处理', score: 3, fb: '不擅自处理是对的。但“什么都不做”还不够，及时把情况反映出去，才能帮有权部门作出判断。' }
+      ]
+    },
+    {
+      title: '线索四 · 群里流传的“涉案人员”信息',
+      text: '某个聊天群里，有人发消息称某地正在查处一起案件，并附上疑似当事人的照片和家庭住址，号召大家“转发曝光、帮忙找人”。',
+      question: '你的判断是？',
+      options: [
+        { t: '按规定进一步核查', score: 1, fb: '随意查找、核实他人的身份信息，可能侵犯他人的合法权益，也不是普通公众应该做的事。' },
+        { t: '保存相关线索并通过正规渠道反映', score: 3, fb: '把信息交给正规渠道是合理的。但要注意，不要连同他人的照片、住址等个人信息一起转发扩散。' },
+        { t: '不擅自行动，等待有权部门依法处理', ok: true, score: 5, fb: '不参与传播、不猜测他人身份，尊重他人的合法权益，把判断交给有权部门依法处理，是更恰当的选择。' }
+      ]
+    }
+  ];
+
+  /* ---- 第三关：知识挑战（5 题 × 6 分） ---- */
+  var L3_DATA = [
+    {
+      title: '提问一',
+      text: '反走私工作的社会意义，主要体现在哪些方面？',
+      question: '请选择你认为最恰当的一项：',
+      options: [
+        { t: '主要是为了增加罚款收入、充实地方财政。', score: 0, fb: '反走私的目的不是“罚款创收”，而是维护国家利益和公众利益。' },
+        { t: '维护国家经济安全和市场秩序，保护公众健康与合法权益，维护正常的进出口贸易秩序。', ok: true, score: 6, fb: '正确。反走私关系到国家经济安全、市场秩序和每一位消费者的切身利益。' },
+        { t: '只是海关等部门的业务工作，与普通公众关系不大。', score: 0, fb: '反走私不只是某个部门的工作。公众了解常识、提供线索，同样能帮上忙。' }
+      ]
+    },
+    {
+      title: '提问二',
+      text: '关于走私可能带来的危害，下面哪种说法比较恰当？',
+      question: '请选择你认为最恰当的一项：',
+      options: [
+        { t: '走私只会影响国家税收，对普通人的生活没有什么影响。', score: 0, fb: '走私的影响远不止税收，它会渗透到市场秩序、公共安全和消费者健康的方方面面。' },
+        { t: '走私商品的售价通常更低，所以对消费者总体是有利的。', score: 0, fb: '所谓“便宜”往往意味着缺少质量与安全保障，还可能纵容违法活动，最终损害的是消费者自己。' },
+        { t: '走私可能扰乱正常的市场秩序、威胁国家安全，走私货物还可能存在质量安全隐患，危害消费者健康。', ok: true, score: 6, fb: '正确。除了经济层面的影响，走私还可能与更严重的违法犯罪活动交织，危害公共安全。' }
+      ]
+    },
+    {
+      title: '提问三',
+      text: '普通公民依法参与反走私宣传，比较合适的做法是？',
+      question: '请选择你认为最恰当的一项：',
+      options: [
+        { t: '学习了解反走私相关的法律法规和常识，向身边的人传递准确信息，发现线索通过正规渠道反映。', ok: true, score: 6, fb: '正确。学习、传播准确信息、通过正规渠道反映线索，是公众参与反走私最合适的方式。' },
+        { t: '主动上门对怀疑对象进行“问话”和“调查”。', score: 0, fb: '普通公民没有调查权，上门“问话”既越界，也可能给自己和他人带来风险。' },
+        { t: '加入网络“举报群”，协助他人对可疑人员以曝光的方式施压。', score: 0, fb: '以曝光方式施压，容易侵犯他人合法权益，也可能让真正的线索失去依法处理的机会。' }
+      ]
+    },
+    {
+      title: '提问四',
+      text: '发现可疑线索后，比较恰当的处理方式是？',
+      question: '请选择你认为最恰当的一项：',
+      options: [
+        { t: '自行跟踪拍摄当事人，摸清他的活动规律后再决定要不要上报。', score: 0, fb: '自行跟踪、拍摄存在人身安全风险，也可能干扰有权部门的工作，不建议这样做。' },
+        { t: '第一时间发到社交平台，让更多人来讨论和判断。', score: 0, fb: '未经证实的信息一旦扩散，既可能误伤他人，也会让后续的依法核查变得更困难。' },
+        { t: '保留自己掌握的原始信息，注意自身安全，及时通过海关 12360 统一服务热线、当地海关或公安机关等正规渠道反映。', ok: true, score: 6, fb: '正确。保留原始信息、优先保证自身安全、通过正规渠道反映，是稳妥的处理方式。' }
+      ]
+    },
+    {
+      title: '提问五',
+      text: '关于保护个人信息、避免传播未经证实的信息，下列做法正确的是？',
+      question: '请选择你认为最恰当的一项：',
+      options: [
+        { t: '把听来的“内部消息”顺手转到家庭群和朋友圈，让更多人提高警惕。', score: 0, fb: '随手转发未经证实的信息，很容易变成谣言链条的一环，反而可能造成伤害。' },
+        { t: '对未经官方证实的信息保持谨慎，不猜测、不传播他人的身份信息，发现线索只向有权部门提供。', ok: true, score: 6, fb: '正确。保持谨慎、不猜测他人身份、只向有权部门提供线索，既保护了自己，也尊重了他人。' },
+        { t: '在评论区公开猜测某人的身份，帮网友一起“破案”。', score: 0, fb: '在公开场合猜测他人身份，可能侵犯他人权益，也偏离了依法反映线索的初衷。' }
+      ]
+    }
+  ];
+
+  /* ---- 关卡配置 ---- */
+  var LEVELS = {
+    1: { key: 1, hud: '第一关 · 国门检查', short: '国门检查', index: 'LEVEL 01', total: 50, tag: '情景',
+         desc: '你将以反走私宣传志愿者的身份，在港口情景中协助工作人员作出判断。依法核查，证据为先。' },
+    2: { key: 2, hud: '第二关 · 线索研判', short: '线索研判', index: 'LEVEL 02', total: 20, tag: '线索',
+         desc: '这里没有“非黑即白”。阅读线索卡片，在几种处置方式中选出更稳妥的那一种。' },
+    3: { key: 3, hud: '第三关 · 知识挑战', short: '知识挑战', index: 'LEVEL 03', total: 30, tag: '提问',
+         desc: '反走私常识快速问答，检验一下你对反走私的理解。' }
+  };
+  var DATA = { 1: L1_DATA, 2: L2_DATA, 3: L3_DATA };
+  var TOTAL_Q = L1_DATA.length + L2_DATA.length + L3_DATA.length;
+
+  /* ==========================================================
+     5. 全局状态
+     ========================================================== */
+  var state = {
+    running: false,
+    level: 1,
+    idx: 0,
+    score: 0,
+    correct: 0,
+    answered: 0,
+    levelScores: { 1: 0, 2: 0, 3: 0 },
+    levelStat: { 1: { q: 0, c: 0 }, 2: { q: 0, c: 0 }, 3: { q: 0, c: 0 } },
+    answeredFlags: {},
+    locked: false,
+    busy: false
+  };
+
+  /* ==========================================================
+     6. 界面渲染
+     ========================================================== */
+  function showScreen(id) {
+    $$('.screen').forEach(function (s) {
+      if (s.id === id) { s.classList.add('active'); }
+      else { s.classList.remove('active'); }
+    });
+  }
+
+  function openOverlay(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add('show'); }
+  }
+  function closeOverlay(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('show'); }
+  }
+
+  var toastTimer = null;
+  function toast(msg, ms) {
+    var el = $('#toast');
+    if (!el) { return; }
+    el.textContent = msg;
+    el.classList.add('show');
+    if (toastTimer) { clearTimeout(toastTimer); }
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, ms || 2200);
+  }
+
+  function updateHUD() {
+    var meta = LEVELS[state.level];
+    $('#hud-level').textContent = meta.hud;
+    $('#hud-score').textContent = state.score;
+    var pct = Math.round(state.answered / TOTAL_Q * 100);
+    if (pct < 0) { pct = 0; }
+    if (pct > 100) { pct = 100; }
+    $('#hud-bar-fill').style.width = pct + '%';
+  }
+
+  function popScore(v, good) {
+    var box = $('#hud-score-box');
+    if (!box) { return; }
+    var el = document.createElement('span');
+    el.className = 'score-pop' + (good ? '' : ' minus');
+    el.textContent = (v > 0 ? '+' : '') + v;
+    box.appendChild(el);
+    setTimeout(function () {
+      if (el.parentNode) { el.parentNode.removeChild(el); }
+    }, 1000);
+  }
+
+  function renderQuestion() {
+    var lv = state.level;
+    var meta = LEVELS[lv];
+    var list = DATA[lv];
+    var q = list[state.idx];
+    state.locked = false;
+
+    var body = $('#game-body');
+    var h = '';
+    h += '<div class="stage-top">';
+    h += '<span class="stage-tag">' + meta.tag + ' <b>' + (state.idx + 1) + '</b> / ' + list.length + '</span>';
+    h += '<span class="stage-tag alt">' + meta.short + '</span>';
+    h += '</div>';
+    h += '<div class="card' + (lv === 2 ? ' clue-card' : '') + '">';
+    if (q.title) { h += '<div class="q-title">' + q.title + '</div>'; }
+    h += '<p class="q-text">' + q.text + '</p>';
+    h += '<div class="q-ask">' + q.question + '</div>';
+    h += '<div class="opts" id="opts">';
+    for (var i = 0; i < q.options.length; i++) {
+      h += '<button class="opt" type="button" data-i="' + i + '">' +
+           '<span class="badge">' + LETTERS[i] + '</span>' +
+           '<span class="opt-t">' + q.options[i].t + '</span></button>';
+    }
+    h += '</div>';
+    h += '<div class="fb" id="fb" hidden></div>';
+    h += '</div>';
+    body.innerHTML = h;
+    body.scrollTop = 0;
+
+    $$('#opts .opt', body).forEach(function (el) {
+      el.addEventListener('click', function () {
+        onChoose(parseInt(el.getAttribute('data-i'), 10));
+      });
+    });
+  }
+
+  /* ==========================================================
+     7. 计分与流程
+     ========================================================== */
+  function onChoose(i) {
+    if (!state.running || state.locked) { return; }
+    var flagKey = state.level + '-' + state.idx;
+    if (state.answeredFlags[flagKey]) { return; }
+    state.answeredFlags[flagKey] = true;
+    state.locked = true;
+
+    var lv = state.level;
+    var q = DATA[lv][state.idx];
+    var chosen = q.options[i];
+    var bestIdx = 0;
+    for (var k = 0; k < q.options.length; k++) {
+      if (q.options[k].ok) { bestIdx = k; }
+    }
+    var best = q.options[bestIdx];
+    var got = chosen.score || 0;
+
+    state.score += got;
+    state.levelScores[lv] += got;
+    state.answered += 1;
+    state.levelStat[lv].q += 1;
+    if (chosen.ok) {
+      state.correct += 1;
+      state.levelStat[lv].c += 1;
+    }
+
+    var boxes = $$('#opts .opt');
+    boxes.forEach(function (el, idx) {
+      el.disabled = true;
+      if (idx === bestIdx) { el.classList.add('correct'); }
+      else { el.classList.add('dim'); }
+    });
+    if (!chosen.ok && boxes[i]) {
+      boxes[i].classList.remove('dim');
+      boxes[i].classList.add('wrong');
+    }
+
+    Sound.sfx(chosen.ok ? 'correct' : 'wrong');
+    showFeedback(chosen, best, bestIdx);
+    updateHUD();
+    popScore(got, !!chosen.ok);
+  }
+
+  function showFeedback(chosen, best, bestIdx) {
+    var fb = $('#fb');
+    var isLast = (state.idx + 1 >= DATA[state.level].length);
+    var h = '';
+    h += '<div class="fb-head ' + (chosen.ok ? 'good' : 'bad') + '">';
+    h += '<span class="fb-ico">' + (chosen.ok ? '✓' : '!') + '</span>';
+    h += '<span class="fb-t">' + (chosen.ok ? '判断到位' : '换个角度想想') + '</span>';
+    h += '<span class="fb-s">+' + (chosen.score || 0) + ' 分</span>';
+    h += '</div>';
+    h += '<p class="fb-p">' + chosen.fb + '</p>';
+    if (!chosen.ok) {
+      h += '<div class="fb-best"><b>更妥当的选择：' + LETTERS[bestIdx] + '</b>' + best.t +
+           '<span class="fb-why">' + best.fb + '</span></div>';
+    }
+    h += '<button class="btn btn-primary btn-block" id="btn-next-q" type="button">' +
+         (isLast ? (state.level < 3 ? '完成本关' : '查看行动结果') : '继续下一题') + '</button>';
+    fb.innerHTML = h;
+    fb.hidden = false;
+
+    var next = $('#btn-next-q');
+    if (next) { next.addEventListener('click', nextQuestion); }
+
+    setTimeout(function () {
+      if (fb && typeof fb.scrollIntoView === 'function') {
+        try { fb.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
+        catch (e) { try { fb.scrollIntoView(false); } catch (e2) { /* 忽略 */ } }
+      }
+    }, 120);
+  }
+
+  function nextQuestion() {
+    if (state.busy) { return; }
+    state.busy = true;
+    setTimeout(function () { state.busy = false; }, 420);
+
+    state.locked = false;
+    state.idx += 1;
+    if (state.idx >= DATA[state.level].length) { completeLevel(); }
+    else { renderQuestion(); }
+  }
+
+  function completeLevel() {
+    var lv = state.level;
+    var meta = LEVELS[lv];
+    var got = state.levelScores[lv];
+    var st = state.levelStat[lv];
+    markLevelDone(lv);
+    Sound.sfx('level');
+
+    $('#clear-title').textContent = meta.hud + ' 已完成';
+    $('#clear-score').textContent = got;
+    $('#clear-total').textContent = '/ ' + meta.total + ' 分';
+
+    var rate = meta.total > 0 ? got / meta.total : 0;
+    var sub;
+    if (rate >= 0.95) {
+      sub = '本关 ' + st.q + ' 题，判断全部到位。“依法核查、证据为先”这条思路，你已经很稳了。';
+    } else if (rate >= 0.7) {
+      sub = '本关 ' + st.q + ' 题，答对 ' + st.c + ' 题，整体不错，个别情景还能再稳一点。';
+    } else {
+      sub = '本关 ' + st.q + ' 题，答对 ' + st.c + ' 题，建议回头看看每题的解析，思路会清晰很多。';
+    }
+    $('#clear-sub').textContent = sub;
+    $('#btn-clear-next').textContent = (lv < 3) ? '进入下一关' : '查看行动结果';
+    openOverlay('ov-clear');
+  }
+
+  var startLevelTimer = null;
+  function startLevel(lv) {
+    var meta = LEVELS[lv];
+    var trans = $('#transition');
+    $('#trans-idx').textContent = meta.index;
+    $('#trans-title').textContent = meta.short;
+    $('#trans-desc').textContent = meta.desc;
+
+    showScreen('screen-game');
+    updateHUD();
+    openOverlay('transition');
+
+    var done = false;
+    var begin = function () {
+      if (done) { return; }
+      done = true;
+      if (startLevelTimer) { clearTimeout(startLevelTimer); startLevelTimer = null; }
+      trans.onclick = null;
+      closeOverlay('transition');
+      renderQuestion();
+    };
+    trans.onclick = begin;
+    startLevelTimer = setTimeout(begin, 2200);
+  }
+
+  function resetGame() {
+    state.running = true;
+    state.level = 1;
+    state.idx = 0;
+    state.score = 0;
+    state.correct = 0;
+    state.answered = 0;
+    state.levelScores = { 1: 0, 2: 0, 3: 0 };
+    state.levelStat = { 1: { q: 0, c: 0 }, 2: { q: 0, c: 0 }, 3: { q: 0, c: 0 } };
+    state.answeredFlags = {};
+    state.locked = false;
+    state.busy = false;
+    $('#game-body').innerHTML = '';
+    closeOverlay('ov-clear');
+    closeOverlay('ov-poster');
+    updateHUD();
+  }
+
+  function startGame() {
+    closeOverlay('ov-rules');
+    closeOverlay('ov-clear');
+    closeOverlay('ov-poster');
+    closeOverlay('ov-confirm');
+    resetGame();
+    startLevel(1);
+  }
+
+  function onClearNext() {
+    closeOverlay('ov-clear');
+    if (state.level < 3) {
+      state.level += 1;
+      state.idx = 0;
+      startLevel(state.level);
+    } else {
+      endGame();
+    }
+  }
+
+  /* ==========================================================
+     8. 结算与结局
+     ========================================================== */
+  function ratingOf(score) {
+    if (score >= 90) {
+      return {
+        letter: 'S', stars: 3, title: '国门守护先锋',
+        sub: '判断清晰、处置规范，你已经具备相当扎实的反走私常识。',
+        slogan: '国门有我，寸土不让——把这份清醒带到每一次选择里。'
+      };
+    }
+    if (score >= 70) {
+      return {
+        letter: 'A', stars: 3, title: '反走私行动能手',
+        sub: '大部分判断准确，个别情景再稳一点就更好了。',
+        slogan: '多一分了解，就多一道防线；把这份清醒分享给身边的人。'
+      };
+    }
+    if (score >= 60) {
+      return {
+        letter: 'B', stars: 2, title: '反走私知识学习者',
+        sub: '基础常识已经掌握，建议再回顾一遍每题的解析。',
+        slogan: '每一次学习，都是在为国门加固一道防线，继续加油。'
+      };
+    }
+    return {
+      letter: 'C', stars: 1, title: '继续学习，再次挑战',
+      sub: '别灰心，先看看每一题的解析，再来一次你会做得更好。',
+      slogan: '了解得越多，判断就越准；守住国门，我们一起行动。'
+    };
+  }
+
+  function countUp(el, from, to, dur) {
+    if (!el) { return; }
+    var t0 = Date.now();
+    var step = function () {
+      var p = Math.min(1, (Date.now() - t0) / dur);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(from + (to - from) * eased));
+      if (p < 1) { requestAnimationFrame(step); }
+      else { el.textContent = String(to); }
+    };
+    requestAnimationFrame(step);
+  }
+
+  function endGame() {
+    state.running = false;
+    Sound.sfx('finish');
+
+    var r = ratingOf(state.score);
+    var prevBest = getBest();
+    var best = Math.max(prevBest, state.score);
+    setBest(best);
+
+    $('#rank-letter').textContent = r.letter;
+    $('#rank-tag').textContent = '评级 ' + r.letter;
+    $('#rank-title').textContent = r.title;
+    $('#rank-sub').textContent = r.sub;
+    $('#end-correct').textContent = state.correct + ' / ' + TOTAL_Q;
+    $('#end-best').textContent = best;
+    $('#end-slogan').textContent = '“' + r.slogan + '”';
+
+    var stars = $$('#rank-stars i');
+    stars.forEach(function (s, i) {
+      s.classList.remove('on');
+      if (i < r.stars) {
+        (function (node, delay) {
+          setTimeout(function () { node.classList.add('on'); }, delay);
+        })(s, 260 + i * 190);
+      }
+    });
+
+    var rows = '';
+    for (var lv = 1; lv <= 3; lv++) {
+      var m = LEVELS[lv];
+      var got = state.levelScores[lv];
+      var pct = m.total > 0 ? Math.round(got / m.total * 100) : 0;
+      rows += '<div class="bd-row">' +
+              '<span class="bd-name">' + m.hud + '</span>' +
+              '<span class="bd-bar"><i data-w="' + pct + '"></i></span>' +
+              '<span class="bd-val">' + got + ' / ' + m.total + '</span>' +
+              '</div>';
+    }
+    $('#end-breakdown').innerHTML = rows;
+
+    showScreen('screen-ending');
+    countUp($('#end-score'), 0, state.score, 900);
+    setTimeout(function () {
+      $$('#end-breakdown .bd-bar i').forEach(function (el) {
+        el.style.width = (el.getAttribute('data-w') || 0) + '%';
+      });
+    }, 280);
+
+    refreshHome();
+  }
+
+  function refreshHome() {
+    var best = getBest();
+    $('#home-best').textContent = best > 0 ? (best + ' 分') : '--';
+    var done = getLevelsDone().filter(function (v) { return v; }).length;
+    $('#home-clear').textContent = done + ' / 3';
+    if (!STORE.usable) {
+      var foot = $('.home-foot');
+      if (foot) {
+        var tip = $('#store-warn');
+        if (!tip) {
+          tip = document.createElement('span');
+          tip.id = 'store-warn';
+          foot.appendChild(tip);
+        }
+        tip.textContent = '本地记录暂不可用，游戏仍可正常进行';
+        tip.style.color = '#d8b46a';
+      }
+    }
+  }
+
+  /* ==========================================================
+     9. 结局卡片（Canvas 绘制 + 下载 / 复制，含降级方案）
+     ========================================================== */
+  var posterDataUrl = '';
+
+  function posterText() {
+    var r = ratingOf(state.score);
+    return '我在《国门行动：反走私守护者》中得了 ' + state.score + ' 分，评级「' + r.title +
+           '」，答对 ' + state.correct + ' / ' + TOTAL_Q + ' 题。\n' +
+           '全民反走私，你我齐参与。\n' +
+           '（本结果为科普互动游戏评价，不代表任何执法资格或官方荣誉）';
+  }
+
+  function wrapText(g, text, x, y, maxWidth, lineHeight) {
+    var chars = String(text).split('');
+    var line = '';
+    var lines = [];
+    for (var i = 0; i < chars.length; i++) {
+      var test = line + chars[i];
+      if (g.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = chars[i];
+      } else {
+        line = test;
+      }
+    }
+    if (line) { lines.push(line); }
+    for (var j = 0; j < lines.length; j++) {
+      g.fillText(lines[j], x, y + j * lineHeight);
+    }
+    return lines.length;
+  }
+
+  function drawPoster() {
+    var W = 720, H = 1080;
+    var cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    var g = cv.getContext('2d');
+    if (!g) { return ''; }
+
+    var r = ratingOf(state.score);
+    var FONT = '"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",sans-serif';
+
+    /* 背景 */
+    var bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#03102a');
+    bg.addColorStop(0.42, '#0a2450');
+    bg.addColorStop(0.74, '#071a38');
+    bg.addColorStop(1, '#02060f');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+
+    /* 光晕 */
+    var halo = g.createRadialGradient(W / 2, 330, 20, W / 2, 330, 440);
+    halo.addColorStop(0, 'rgba(111,166,255,.42)');
+    halo.addColorStop(1, 'rgba(111,166,255,0)');
+    g.fillStyle = halo;
+    g.fillRect(0, 0, W, H);
+
+    /* 星点（固定种子，保证每次一致） */
+    var seed = 20261014;
+    var rnd = function () {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    g.fillStyle = 'rgba(207,228,255,.9)';
+    for (var i = 0; i < 90; i++) {
+      var sx = rnd() * W;
+      var sy = rnd() * 700;
+      var sr = rnd() * 1.8 + 0.5;
+      g.globalAlpha = 0.3 + rnd() * 0.65;
+      g.beginPath();
+      g.arc(sx, sy, sr, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+
+    /* 金色边框 */
+    g.strokeStyle = 'rgba(240,192,64,.6)';
+    g.lineWidth = 3;
+    g.strokeRect(24, 24, W - 48, H - 48);
+    g.strokeStyle = 'rgba(240,192,64,.24)';
+    g.lineWidth = 1;
+    g.strokeRect(36, 36, W - 72, H - 72);
+
+    /* 标题区 */
+    g.textAlign = 'center';
+    g.textBaseline = 'alphabetic';
+    g.fillStyle = 'rgba(143,192,255,.95)';
+    g.font = 'bold 20px ' + FONT;
+    g.fillText('反 走 私 主 题 互 动 游 戏', W / 2, 104);
+    g.fillStyle = '#ffdf8a';
+    g.font = 'bold 46px ' + FONT;
+    g.fillText('国门行动', W / 2, 168);
+    g.fillStyle = 'rgba(206,224,255,.95)';
+    g.font = '24px ' + FONT;
+    g.fillText('反走私守护者', W / 2, 208);
+    g.fillStyle = 'rgba(255,223,138,.9)';
+    g.font = '20px ' + FONT;
+    g.fillText('全民反走私 · 你我齐参与', W / 2, 248);
+
+    /* 评级徽章 */
+    g.beginPath();
+    g.arc(W / 2, 344, 74, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(20,44,92,.8)';
+    g.fill();
+    g.lineWidth = 3;
+    g.strokeStyle = 'rgba(240,192,64,.8)';
+    g.stroke();
+    g.fillStyle = '#ffdf8a';
+    g.font = 'bold 66px ' + FONT;
+    g.textBaseline = 'middle';
+    g.fillText(r.letter, W / 2, 352);
+    g.textBaseline = 'alphabetic';
+
+    /* 分数 */
+    g.fillStyle = '#ffffff';
+    g.font = 'bold 136px ' + FONT;
+    g.fillText(String(state.score), W / 2, 556);
+    g.fillStyle = 'rgba(160,192,240,.95)';
+    g.font = '22px ' + FONT;
+    g.fillText('总得分 / 100', W / 2, 596);
+    g.fillStyle = 'rgba(160,192,240,.8)';
+    g.font = '20px ' + FONT;
+    g.fillText('答对 ' + state.correct + ' / ' + TOTAL_Q + ' 题', W / 2, 634);
+
+    /* 评级名称 */
+    g.fillStyle = '#ffdf8a';
+    g.font = 'bold 38px ' + FONT;
+    g.fillText(r.title, W / 2, 716);
+    g.fillStyle = 'rgba(180,205,240,.9)';
+    g.font = '19px ' + FONT;
+    wrapText(g, r.sub, W / 2, 756, 540, 30);
+
+    /* 国门线稿装饰 */
+    g.save();
+    g.strokeStyle = 'rgba(110,170,255,.4)';
+    g.lineWidth = 3;
+    g.beginPath(); g.moveTo(180, 900); g.lineTo(180, 830); g.stroke();
+    g.beginPath(); g.moveTo(540, 900); g.lineTo(540, 830); g.stroke();
+    g.beginPath(); g.moveTo(160, 830); g.lineTo(560, 830); g.stroke();
+    g.strokeStyle = 'rgba(240,192,64,.55)';
+    g.beginPath(); g.moveTo(160, 820); g.lineTo(560, 820); g.stroke();
+    g.fillStyle = 'rgba(255,223,138,.9)';
+    g.font = 'bold 22px ' + FONT;
+    g.fillText('国 门', 360, 806);
+    g.strokeStyle = 'rgba(90,150,255,.26)';
+    g.lineWidth = 2;
+    for (var w = 0; w < 3; w++) {
+      var wy = 912 + w * 24;
+      g.beginPath();
+      g.moveTo(120, wy);
+      for (var wx = 120; wx <= 600; wx += 60) {
+        g.quadraticCurveTo(wx + 30, wy + (w % 2 === 0 ? -10 : 10), wx + 60, wy);
+      }
+      g.stroke();
+    }
+    g.restore();
+
+    /* 宣传语 */
+    g.fillStyle = 'rgba(255,233,184,.95)';
+    g.font = '21px ' + FONT;
+    wrapText(g, r.slogan, W / 2, 1004, 560, 32);
+    g.fillStyle = 'rgba(140,170,215,.85)';
+    g.font = '17px ' + FONT;
+    g.fillText('本卡片为科普互动游戏结果，不代表任何执法资格或官方荣誉', W / 2, H - 40);
+
+    try {
+      return cv.toDataURL('image/png');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function buildPoster() {
+    var img = $('#poster-img');
+    var fb = $('#poster-fallback');
+    var url = '';
+    try { url = drawPoster(); } catch (e) { url = ''; }
+
+    if (url) {
+      posterDataUrl = url;
+      img.src = url;
+      img.style.display = 'block';
+      fb.style.display = 'none';
+      $('#btn-poster-save').disabled = false;
+      $('#poster-tip').textContent = '电脑端点击“保存图片”即可下载；手机端也可长按图片保存到相册。';
+    } else {
+      posterDataUrl = '';
+      img.style.display = 'none';
+      fb.style.display = 'block';
+      fb.textContent = posterText();
+      $('#btn-poster-save').disabled = true;
+      $('#poster-tip').textContent = '当前浏览器不支持生成图片，可点击“复制文案”后粘贴分享。';
+    }
+    openOverlay('ov-poster');
+  }
+
+  function savePoster() {
+    if (!posterDataUrl) {
+      toast('当前环境无法生成图片，请使用“复制文案”分享');
+      return;
+    }
+    try {
+      var a = document.createElement('a');
+      a.href = posterDataUrl;
+      a.download = '国门行动_结局卡片_' + state.score + '分.png';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        if (a.parentNode) { a.parentNode.removeChild(a); }
+      }, 100);
+      toast('已开始下载；手机端若未保存，请长按图片另存');
+    } catch (e) {
+      toast('当前浏览器不支持直接下载，请长按图片保存');
+    }
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', 'readonly');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      var okFlag = document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast(okFlag ? '文案已复制，去粘贴分享吧' : '复制失败，请长按选择文本');
+    } catch (e) {
+      toast('复制失败，请长按选择文本');
+    }
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast('文案已复制，去粘贴分享吧');
+      }).catch(function () {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  /* ==========================================================
+     10. 事件绑定与初始化
+     ========================================================== */
+  var pendingConfirm = null;
+
+  function askConfirm(text, fn) {
+    $('#confirm-text').textContent = text;
+    pendingConfirm = fn;
+    openOverlay('ov-confirm');
+  }
+
+  function syncSoundButtons() {
+    var on = Sound.isOn();
+    var homeBtn = $('#btn-sound-home');
+    if (homeBtn) { homeBtn.textContent = '音效：' + (on ? '开' : '关'); }
+    $$('#btn-sound-hud .ico-on').forEach(function (e) { e.style.display = on ? '' : 'none'; });
+    $$('#btn-sound-hud .ico-off').forEach(function (e) { e.style.display = on ? 'none' : ''; });
+  }
+
+  function ripple(el, e) {
+    try {
+      var rect = el.getBoundingClientRect();
+      var size = Math.max(rect.width, rect.height);
+      if (size <= 0) { return; }
+      var s = document.createElement('span');
+      s.className = 'ripple';
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      var cx = (e && e.clientX) ? e.clientX : (rect.left + rect.width / 2);
+      var cy = (e && e.clientY) ? e.clientY : (rect.top + rect.height / 2);
+      s.style.left = (cx - rect.left - size / 2) + 'px';
+      s.style.top = (cy - rect.top - size / 2) + 'px';
+      el.appendChild(s);
+      setTimeout(function () {
+        if (s.parentNode) { s.parentNode.removeChild(s); }
+      }, 640);
+    } catch (err) { /* 忽略 */ }
+  }
+
+  function init() {
+    syncSoundButtons();
+    refreshHome();
+    updateHUD();
+
+    /* 首次用户手势解锁音频（移动端策略要求） */
+    var unlock = function () {
+      Sound.unlock();
+      document.removeEventListener('touchstart', unlock, false);
+      document.removeEventListener('mousedown', unlock, false);
+      document.removeEventListener('keydown', unlock, false);
+    };
+    document.addEventListener('touchstart', unlock, false);
+    document.addEventListener('mousedown', unlock, false);
+    document.addEventListener('keydown', unlock, false);
+
+    /* 首页 */
+    $('#btn-start').addEventListener('click', startGame);
+    $('#btn-rules').addEventListener('click', function () { openOverlay('ov-rules'); });
+    $('#btn-knowledge').addEventListener('click', function () { openOverlay('ov-know'); });
+    $('#btn-about').addEventListener('click', function () { openOverlay('ov-about'); });
+    $('#btn-sound-home').addEventListener('click', function () { Sound.toggle(); syncSoundButtons(); });
+    $('#btn-sound-hud').addEventListener('click', function () { Sound.toggle(); syncSoundButtons(); });
+    $('#btn-rules-start').addEventListener('click', startGame);
+
+    /* 弹层关闭 */
+    $$('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () { closeOverlay(b.getAttribute('data-close')); });
+    });
+    ['ov-rules', 'ov-know', 'ov-about'].forEach(function (id) {
+      var ov = document.getElementById(id);
+      if (ov) {
+        ov.addEventListener('click', function (e) {
+          if (e.target === ov) { closeOverlay(id); }
+        });
+      }
+    });
+
+    /* 游戏内返回首页 */
+    $('#btn-back').addEventListener('click', function () {
+      if (!state.running) { showScreen('screen-home'); return; }
+      askConfirm('返回首页会结束本次行动，当前进度不会保存。确定返回吗？', function () {
+        state.running = false;
+        closeOverlay('transition');
+        if (startLevelTimer) { clearTimeout(startLevelTimer); startLevelTimer = null; }
+        $('#transition').onclick = null;
+        refreshHome();
+        showScreen('screen-home');
+      });
+    });
+
+    /* 结算 / 结局 */
+    $('#btn-clear-next').addEventListener('click', onClearNext);
+    $('#btn-retry').addEventListener('click', startGame);
+    $('#btn-home2').addEventListener('click', function () {
+      refreshHome();
+      showScreen('screen-home');
+    });
+    $('#btn-poster').addEventListener('click', buildPoster);
+    $('#btn-poster-save').addEventListener('click', savePoster);
+    $('#btn-poster-copy').addEventListener('click', function () { copyText(posterText()); });
+
+    /* 确认框 */
+    $('#btn-confirm-cancel').addEventListener('click', function () {
+      pendingConfirm = null;
+      closeOverlay('ov-confirm');
+    });
+    $('#btn-confirm-ok').addEventListener('click', function () {
+      var fn = pendingConfirm;
+      pendingConfirm = null;
+      closeOverlay('ov-confirm');
+      if (typeof fn === 'function') { fn(); }
+    });
+
+    /* 全局按钮音效 + 水波纹（按下即有反馈） */
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      var btn = null;
+      if (el && el.closest) { btn = el.closest('.btn'); }
+      else if (el && el.parentNode && el.parentNode.closest) { btn = el.parentNode.closest('.btn'); }
+      if (!btn) { return; }
+      ripple(btn, e);
+      Sound.sfx(btn.classList.contains('btn-primary') ? 'press' : 'click');
+    }, false);
+
+    /* 键盘可达性（桌面端） */
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') { return; }
+      var a = document.activeElement;
+      if (a && a.classList && a.classList.contains('opt') && !a.disabled) {
+        e.preventDefault();
+        onChoose(parseInt(a.getAttribute('data-i'), 10));
+      }
+    }, false);
+
+    /* 禁止移动端双击缩放带来的误触 */
+    var lastTouch = 0;
+    document.addEventListener('touchend', function (e) {
+      var now = Date.now();
+      if (now - lastTouch <= 320 && e.cancelable) { e.preventDefault(); }
+      lastTouch = now;
+    }, false);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
